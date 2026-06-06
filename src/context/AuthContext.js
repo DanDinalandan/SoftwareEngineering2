@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   };
 
   // ── REGISTER ─────────────────────────────────────────────────────────────
-  const register = ({ email, username, password }) => {
+  const register = ({ email, username, password, phone = '' }) => {
     const emailLower = email.trim().toLowerCase();
     const usernameLower = username.trim().toLowerCase();
     const exists = registeredUsers.find(
@@ -42,10 +42,13 @@ export function AuthProvider({ children }) {
       role: '',
       firstName: '', lastName: '', middleName: '', suffix: '',
       birthday: '', age: '', gender: '',
+      phone: phone || '',
       streak: 0, totalPoints: 0,
       moodLogs: [],
       lastRelapseRisk: 0,
       profileComplete: false,
+      goal: null,
+      twoFAEnabled: false,
       // Connection fields
       connectedPeerUsername: null,
       connectedVapeUserUsername: null,
@@ -75,25 +78,17 @@ export function AuthProvider({ children }) {
     refresh(currentUser);
   };
 
-  const saveDetails = ({ firstName, lastName, middleName, suffix, birthday, age, gender }) => {
+  const saveDetails = ({ firstName, lastName, middleName, suffix, birthday, age, gender, vapeTypes = [] }) => {
     if (!currentUser) return;
     Object.assign(currentUser, {
       firstName, lastName, middleName, suffix, birthday, age, gender,
-      profileComplete: true,
+      vapeTypes, profileComplete: true,
     });
     refresh(currentUser);
   };
 
-  const setGoal = (goalData) => {
-  if (!currentUser) return;
-
-  currentUser.goal = goalData;
-
-  refresh(currentUser);
-};
-
   // ── LOG MOOD ENTRY ────────────────────────────────────────────────────────
-  const logMoodEntry = ({ mood, triggers, craving, vaped }) => {
+  const logMoodEntry = ({ mood, triggers, craving, vaped, puffsToday = 0, vapedHour = null, comment = '' }) => {
     if (!currentUser) return { error: 'Not logged in' };
     const today = new Date().toISOString().split('T')[0];
     if (currentUser.moodLogs.find((l) => l.date === today)) return { alreadyLogged: true };
@@ -107,6 +102,9 @@ export function AuthProvider({ children }) {
 
     const entry = {
       id: uid(), date: today, mood, triggers, craving, vaped,
+      puffsToday: vaped ? puffsToday : 0,
+      vapedHour:  vaped ? vapedHour  : null,
+      comment,
       relapseRisk, points: pointsEarned,
       timestamp: new Date().toLocaleString(),
     };
@@ -122,19 +120,20 @@ export function AuthProvider({ children }) {
       if (relapseRisk > 60 || mood === 'Awful' || mood === 'Bad') {
         _pushNotification({
           toUsername: peerUsername, type: 'high_risk',
-          message: `${displayName} logged ${mood.toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.`,
+          message: `⚠️ ${displayName} logged ${mood.toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.`,
         });
       }
       if (vaped) {
         _pushNotification({
           toUsername: peerUsername, type: 'vaped',
-          message: `${displayName} reported vaping today. Consider reaching out.`,
+          message: `💔 ${displayName} reported vaping today. Consider reaching out.`,
         });
       }
     }
 
+    const newlyUnlocked = _checkAndUnlockRewards(currentUser);
     refresh(currentUser);
-    return { success: true, pointsEarned, newStreak, relapseRisk, entryId: entry.id };
+    return { success: true, pointsEarned, newStreak, relapseRisk, entryId: entry.id, newlyUnlocked };
   };
 
   // ── DELETE LOG ENTRY ──────────────────────────────────────────────────────
@@ -148,6 +147,46 @@ export function AuthProvider({ children }) {
     if (!entry.vaped && currentUser.streak > 0) currentUser.streak = Math.max(0, currentUser.streak - 1);
     refresh(currentUser);
   };
+
+  // ── REWARD SYSTEM ─────────────────────────────────────────────────────────
+  // Each reward has an id, condition function, and metadata.
+  // Conditions receive the currentUser object after the log is saved.
+  const REWARD_DEFS = [
+    { id: 'first_log',      icon: '🌿', name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',       condition: (u) => u.moodLogs.length >= 1 },
+    { id: 'streak_3',       icon: '🌙', name: '3-Day Streak',      pts: 50,   desc: 'Stayed vape-free for 3 days',        condition: (u) => u.streak >= 3 },
+    { id: 'streak_7',       icon: '⭐', name: 'One Week Clean',    pts: 100,  desc: '7 days smoke-free — incredible!',    condition: (u) => u.streak >= 7 },
+    { id: 'streak_14',      icon: '🔥', name: 'Two Weeks Strong',  pts: 200,  desc: '14 days and still going!',           condition: (u) => u.streak >= 14 },
+    { id: 'streak_30',      icon: '💎', name: 'One Month Free',    pts: 500,  desc: '30 days — you are a champion',       condition: (u) => u.streak >= 30 },
+    { id: 'streak_100',     icon: '🏆', name: '100 Days',          pts: 2000, desc: 'A legendary milestone',              condition: (u) => u.streak >= 100 },
+    { id: 'logs_7',         icon: '📓', name: 'Consistent Logger', pts: 80,   desc: 'Logged 7 days in a row',             condition: (u) => u.moodLogs.length >= 7 },
+    { id: 'logs_30',        icon: '📊', name: 'Data Driven',       pts: 300,  desc: 'Logged 30 total entries',            condition: (u) => u.moodLogs.length >= 30 },
+    { id: 'zero_puffs_3',  icon: '🚭', name: 'Puff-Free Trio',    pts: 75,   desc: '3 consecutive days with 0 puffs',    condition: (u) => {
+        const sorted = [...u.moodLogs].sort((a,b)=>a.date.localeCompare(b.date));
+        let streak = 0, best = 0;
+        sorted.forEach(l => { if(!l.vaped){ streak++; best=Math.max(best,streak); } else { streak=0; } });
+        return best >= 3;
+    }},
+    { id: 'goal_set',       icon: '🎯', name: 'Goal Setter',       pts: 30,   desc: 'Set your first quit goal',           condition: (u) => !!u.goal },
+    { id: 'peer_connected', icon: '🤝', name: 'Not Alone',         pts: 50,   desc: 'Connected with a peer supporter',    condition: (u) => !!u.connectedPeerUsername },
+  ];
+
+  // Check all reward conditions and unlock newly earned ones
+  function _checkAndUnlockRewards(user) {
+    if (!user.unlockedRewards) user.unlockedRewards = [];
+    const newlyUnlocked = [];
+    REWARD_DEFS.forEach((r) => {
+      if (!user.unlockedRewards.includes(r.id) && r.condition(user)) {
+        user.unlockedRewards.push(r.id);
+        user.totalPoints += r.pts; // bonus points for earning badge
+        newlyUnlocked.push(r);
+      }
+    });
+    return newlyUnlocked;
+  }
+
+  // Expose reward defs and unlocked list for RewardsScreen
+  const getRewardDefs   = () => REWARD_DEFS;
+  const getUnlockedIds  = () => currentUser?.unlockedRewards || [];
 
   // ── PEER CONNECTION ───────────────────────────────────────────────────────
   // Peer sends request TO a Vape User (by username)
@@ -226,7 +265,7 @@ export function AuthProvider({ children }) {
         _pushNotification({
           toUsername: from.username,
           type: 'connection_accepted',
-          message: `${to.firstName || to.username} accepted your connection request! You are now their peer supporter.`,
+          message: `✅ ${to.firstName || to.username} accepted your connection request! You are now their peer supporter.`,
         });
       }
     } else {
@@ -241,6 +280,21 @@ export function AuthProvider({ children }) {
         });
       }
     }
+    refresh(currentUser);
+  };
+
+  // ── GOAL ────────────────────────────────────────────────────────────────
+  const setGoal = (goal) => {
+    if (!currentUser) return;
+    currentUser.goal = goal;
+    refresh(currentUser);
+  };
+
+  // ── 2FA ──────────────────────────────────────────────────────────────────
+  const update2FA = (enabled, phone) => {
+    if (!currentUser) return;
+    currentUser.twoFAEnabled = enabled;
+    if (phone) currentUser.phone = phone;
     refresh(currentUser);
   };
 
@@ -340,7 +394,10 @@ export function AuthProvider({ children }) {
       sendMessage, getMessages,
       getNotifications, markAllRead, getUnreadCount,
       getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
-      logout, setGoal
+      setGoal, update2FA,
+      getRewardDefs, getUnlockedIds,
+      checkAndUnlockRewards: _checkAndUnlockRewards,
+      logout,
     }}>
       {children}
     </AuthContext.Provider>
