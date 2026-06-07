@@ -237,7 +237,6 @@ export default function GoalsScreen({ navigation }) {
           <View style={styles.modal}>
             {showDetail && (
               <>
-                <Text style={styles.modalEmoji}>{showDetail.emoji}</Text>
                 <Text style={styles.modalTitle}>{showDetail.label}</Text>
                 <Text style={styles.modalDesc}>{showDetail.description}</Text>
                 <View style={[styles.limitBox, { borderColor: showDetail.color + '60' }]}>

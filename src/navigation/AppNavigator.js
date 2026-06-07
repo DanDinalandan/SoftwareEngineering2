@@ -16,9 +16,10 @@ import MoodScreen       from '../screens/MoodScreen';
 import RewardsScreen    from '../screens/RewardsScreen';
 import SupportScreen    from '../screens/SupportScreen';
 import ProfileScreen    from '../screens/ProfileScreen';
-import CalendarScreen   from '../screens/vapeuser/CalendarScreen';
-import GoalsScreen      from '../screens/vapeuser/GoalsScreen';
-import SecurityScreen   from '../screens/vapeuser/SecurityScreen';
+import CalendarScreen      from '../screens/vapeuser/CalendarScreen';
+import GoalsScreen         from '../screens/vapeuser/GoalsScreen';
+import SecurityScreen      from '../screens/vapeuser/SecurityScreen';
+import WeeklyReportScreen  from '../screens/vapeuser/WeeklyReportScreen';
 import VapeUserNotificationsScreen from '../screens/vapeuser/VapeUserNotificationsScreen';
 
 // Peer
@@ -39,7 +40,6 @@ const SO = {
   contentStyle: { backgroundColor: colors.bg },
 };
 
-// Smart router: sends Peer → PeerDashboard, Vape User → VapeUserDashboard
 function SmartDashboard({ navigation }) {
   const { currentUser } = useAuth();
   React.useEffect(() => {
@@ -53,28 +53,29 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home" screenOptions={SO}>
-        {/* ── Auth ── */}
+        {/* Auth */}
         <Stack.Screen name="Home"      component={HomeScreen}     options={{ headerShown: false }} />
         <Stack.Screen name="SignUp"    component={SignUpScreen}   options={{ title: 'Create Account' }} />
         <Stack.Screen name="Login"     component={LoginScreen}    options={{ title: 'Login' }} />
         <Stack.Screen name="Selection" component={SelectionScreen} options={{ title: 'Select Role', headerBackVisible: false }} />
         <Stack.Screen name="Details"   component={DetailsScreen}  options={{ headerShown: false }} />
 
-        {/* ── Smart router ── */}
+        {/* Smart router */}
         <Stack.Screen name="Dashboard" component={SmartDashboard} options={{ headerShown: false, gestureEnabled: false }} />
 
-        {/* ── Vape User ── */}
+        {/* Vape User */}
         <Stack.Screen name="VapeUserDashboard" component={DashboardScreen}  options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="Mood"              component={MoodScreen}       options={{ headerShown: false }} />
         <Stack.Screen name="Rewards"           component={RewardsScreen}    options={{ headerShown: false }} />
         <Stack.Screen name="Support"           component={SupportScreen}    options={{ headerShown: false }} />
         <Stack.Screen name="Profile"           component={ProfileScreen}    options={{ headerShown: false }} />
-        <Stack.Screen name="Calendar"          component={CalendarScreen}   options={{ headerShown: false }} />
-        <Stack.Screen name="Goals"             component={GoalsScreen}      options={{ headerShown: false }} />
-        <Stack.Screen name="Security"          component={SecurityScreen}   options={{ headerShown: false }} />
+        <Stack.Screen name="Calendar"          component={CalendarScreen}      options={{ headerShown: false }} />
+        <Stack.Screen name="Goals"             component={GoalsScreen}         options={{ headerShown: false }} />
+        <Stack.Screen name="Security"          component={SecurityScreen}      options={{ headerShown: false }} />
+        <Stack.Screen name="WeeklyReport"      component={WeeklyReportScreen}  options={{ headerShown: false }} />
         <Stack.Screen name="Notifications"     component={VapeUserNotificationsScreen} options={{ headerShown: false }} />
 
-        {/* ── Peer ── */}
+        {/* Peer */}
         <Stack.Screen name="PeerDashboard"     component={PeerDashboardScreen}     options={{ headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="PeerNotifications" component={PeerNotificationsScreen} options={{ headerShown: false }} />
         <Stack.Screen name="PeerMessaging"     component={PeerMessagingScreen}     options={{ headerShown: false }} />

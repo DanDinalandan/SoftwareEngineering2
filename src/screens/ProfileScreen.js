@@ -14,6 +14,7 @@ const icons = {
   security: require('../../assets/icons/locked.png'),
   settings: require('../../assets/icons/settings.png'),
   about: require('../../assets/icons/about.png'),
+  report: require('../../assets/icons/report.png'),
 };
 
 // Progress color based on streak or score
@@ -222,18 +223,30 @@ export default function ProfileScreen({ navigation }) {
         )}
 
         {/* Menu items */}
-        <Text style={styles.sectionLabel}>Account</Text>
-        <View style={styles.menuCard}>
+  <Text style={styles.sectionLabel}>Account</Text>
+
+<View style={styles.menuCard}>
+  <TouchableOpacity
+    style={styles.menuItem}
+    onPress={() => navigation.navigate('WeeklyReport')}
+  >
+    <Image source={icons.report} style={styles.menuIconImg} />
+    <Text style={styles.menuText}>Weekly Report</Text>
+    <Text style={[styles.menuMeta, { color: colors.lavender }]}>
+    <Text>View insights</Text>
+      </Text>
+        <Text style={styles.menuArrow}>{'›'}</Text>
+        </TouchableOpacity>
+       <View style={styles.menuDivider} />
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => navigation.navigate('Goals')}
-          >
+            onPress={() => navigation.navigate('Goals')} >
             <Image source={icons.goal} style={styles.menuIconImg} />
             <Text style={styles.menuText}>My Goal</Text>
             {goal && (
               <Text style={[styles.menuMeta, { color: goal.color }]}>{goal.label}</Text>
             )}
-            <Text style={styles.menuArrow}>›</Text>
+            <Text style={styles.menuArrow}>{'›'}</Text>
           </TouchableOpacity>
           <View style={styles.menuDivider} />
           <TouchableOpacity
