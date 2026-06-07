@@ -3,7 +3,6 @@ import { notifications } from '../data/mockData.js'
 
 const FILTERS = ['All', 'Alerts', 'Updates', 'Milestones']
 
-// Maps each tab name to a function that decides which notifications to show
 const FILTER_FNS = {
   All:        () => true,
   Alerts:     (n) => n.type === 'alert',

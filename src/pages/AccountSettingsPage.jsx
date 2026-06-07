@@ -22,7 +22,7 @@ function ProfileCard() {
 
       {/* Avatar placeholder */}
       <div className="profile-avatar-big">
-        <svg width="50" height="50" fill="none" stroke="var(--text-light)" strokeWidth="2" viewBox="0 0 24 24">
+        <svg width="50" height="50" fill="none" stroke="var(--border-accent)" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
       </div>
@@ -125,25 +125,35 @@ function ActivityCard() {
   )
 }
 
-// ── Danger zone card (right column) ───────────────────────────
-function DangerZoneCard() {
+// ── Session management card (right column) ───────────────────────────
+function SignOutCard({ onLogout }) {
   return (
     <div className="card">
-      <div className="settings-title">Danger Zone</div>
-      <p style={{ fontSize: 13, color: 'var(--bg-canvas)', marginBottom: 16, lineHeight: 1.7 }}>
-        Permanently delete your account and all associated patient data.
-        This action cannot be undone and will revoke all monitoring access immediately.
-      </p>
-      <button className="btn-danger" style={{ width: '100%' }}>Delete Account</button>
+      <div className="settings-title">Session</div>
+      <button 
+        onClick={onLogout} 
+        style={{ 
+          width: '100%', 
+          background: 'rgba(187,127,226,0.15)', 
+          border: '1px solid rgba(187,127,226,0.4)', 
+          color: '#BB7FE2', 
+          padding: '12px 28px', 
+          borderRadius: 12, 
+          fontSize: 14, 
+          fontWeight: 700, 
+          cursor: 'pointer' 
+        }}
+      >
+        Sign Out
+      </button>
     </div>
   )
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function AccountSettingsPage() {
+function AccountSettingsPage({ onLogout }) {
   return (
     <div>
-
       <div className="settings-grid">
         
         {/* Left column */}
@@ -156,7 +166,7 @@ function AccountSettingsPage() {
         <div>
           <NotifPrefsCard />
           <ActivityCard />
-          <DangerZoneCard />
+          <SignOutCard onLogout={onLogout} />
         </div>
       </div>
     </div>

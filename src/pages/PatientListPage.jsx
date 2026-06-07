@@ -15,29 +15,29 @@ function SummaryCards() {
       <div className="pl-sum-card">
         <div className="section-label">Total patients</div>
         <div className="pl-sum-val">{total}</div>
-        <div style={{ fontSize: 12, color: 'var(--bg-canvas)' }}>Under monitoring</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Under monitoring</div>
       </div>
       <div className="pl-sum-card">
         <div className="section-label">Stable</div>
         <div className="pl-sum-val" style={{ color: 'var(--green)' }}>{stable}</div>
-        <div style={{ fontSize: 12, color: 'var(--bg-canvas)' }}>Low risk</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Low risk</div>
       </div>
       <div className="pl-sum-card">
         <div className="section-label">Monitor</div>
         <div className="pl-sum-val" style={{ color: 'var(--amber)' }}>{monitor}</div>
-        <div style={{ fontSize: 12, color: 'var(--bg-canvas)' }}>Elevated risk</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Elevated risk</div>
       </div>
       <div className="pl-sum-card">
         <div className="section-label">Alert</div>
         <div className="pl-sum-val" style={{ color: 'var(--red)' }}>{alert}</div>
-        <div style={{ fontSize: 12, color: 'var(--bg-canvas)' }}>Needs attention</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Needs attention</div>
       </div>
     </div>
   )
 }
 
-// ── A single table row for one patient ────────────────────────
-function PatientRow({ patient }) {
+// ── Table row for one patient ────────────────────────
+function PatientRow({ patient, onViewClick }) {
   const streakColor =
     patient.streak === 0          ? 'var(--red)'   :
     patient.status === 'monitor'  ? 'var(--amber)' :
@@ -51,7 +51,7 @@ function PatientRow({ patient }) {
           <div className="p-avatar-sm">{patient.emoji}</div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 13 }}>{patient.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--bg-canvas)' }}>{patient.email}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{patient.email}</div>
           </div>
         </div>
       </td>
@@ -61,14 +61,14 @@ function PatientRow({ patient }) {
       <td style={{ fontWeight: 700, color: streakColor }}>{patient.streakLabel}</td>
       <td>{patient.lastMood}</td>
 
-      {/* Trigger pill — red tint for high-risk triggers */}
+      {/* Trigger pill */}
       <td>
         <span className={`tag-pill${patient.triggerLevel === 'high' ? ' tag-pill-high' : ''}`}>
           {patient.topTrigger}
         </span>
       </td>
 
-      {/* Risk score with coloured dot */}
+      {/* Risk score  */}
       <td>
         <span className="risk-dot" style={{ background: patient.riskColor }} />
         {patient.riskScore}
@@ -82,14 +82,14 @@ function PatientRow({ patient }) {
       </td>
 
       <td style={{ textAlign: 'right', paddingRight: 24 }}>
-        <button className="btn-view">View</button>
+        <button className="btn-view" onClick={() => onViewClick(patient.id)}>View</button>
       </td>
     </tr>
   )
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function PatientListPage() {
+function PatientListPage({ onViewPatient }) {
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchTerm,   setSearchTerm  ] = useState('')
 
@@ -110,7 +110,6 @@ function PatientListPage() {
 
       <SummaryCards />
 
-      {/* Toolbar: search input + filter tab buttons */}
       <div className="toolbar">
         <input
           className="search-input"
@@ -133,7 +132,7 @@ function PatientListPage() {
       {/* Patient table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <table className="patient-table">
-          <thead style={{ background: 'rgba(92,55,27,0.3)' }}>
+          <thead style={{ background: 'var(--surface-2)' }}>
             <tr>
               <th style={{ paddingLeft: 24 }}>Patient</th>
               <th>Age / Sex</th>
@@ -148,15 +147,14 @@ function PatientListPage() {
           </thead>
           <tbody>
 
-            {/* Render one PatientRow per filtered result */}
             {filtered.map((p) => (
-              <PatientRow key={p.id} patient={p} />
+              <PatientRow key={p.id} patient={p} onViewClick={onViewPatient} />
             ))}
           </tbody>
         </table>
       </div>
 
-      <div style={{ marginTop: 12, fontSize: 12, color: 'rgba(92,55,27,0.55)', textAlign: 'right' }}>
+      <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'right' }}>
         Showing {filtered.length} of {patients.length} patients
       </div>
     </div>

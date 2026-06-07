@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { patients } from '../data/mockData.js'
 
 const NAV_ITEMS = [
   {
@@ -30,11 +29,9 @@ const NAV_ITEMS = [
   },
 ]
 
-// Status colour mapping for the patient list dots
 const STATUS_COLOR = { stable: 'var(--green)', monitor: 'var(--amber)', alert: 'var(--red)' }
 
-function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient }) {
-  // Controls whether the patient quick-access list is expanded
+function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patientsList = [] }) {
   const [patientsOpen, setPatientsOpen] = useState(true)
 
   return (
@@ -117,7 +114,7 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient }) {
         {/* Collapsible list */}
         {patientsOpen && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {patients.map((p) => {
+            {patientsList.map((p) => {
               const isSelected = activePatientId === p.id
               return (
                 <button

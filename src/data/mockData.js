@@ -255,3 +255,122 @@ export const messages = [
     unread: false,
   },
 ]
+// ── Per-patient statistics data ───────────────────────────────
+export const patientStats = {
+  1: { // Louise Reyes — stable
+    moodWeek:   [ { emoji: '😐', label: 'MON' }, { emoji: '🙁', label: 'TUE' }, { emoji: '😐', label: 'WED' }, { emoji: '😐', label: 'THU' }, { emoji: '🙂', label: 'FRI' }, { emoji: '🙂', label: 'SAT' }, { emoji: '😐', label: 'SUN' } ],
+    sparkline:  [ { height: 18, level: 'low' }, { height: 26, level: 'mid' }, { height: 30, level: 'mid' }, { height: 38, level: 'high' }, { height: 35, level: 'high' }, { height: 24, level: 'mid' }, { height: 16, level: 'low' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: 'Today', done: true }, { label: '30 days', sub: '16 days left', done: false }, { label: '60 days', sub: '46 days left', done: false }, { label: '90 days', sub: '76 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 24, level: 'low' }, { label: 'T', height: 32, level: 'low' }, { label: 'W', height: 48, level: 'mid' }, { label: 'TH', height: 56, level: 'mid' }, { label: 'F', height: 64, level: 'high' }, { label: 'S', height: 80, level: 'high' }, { label: 'SU', height: 56, level: 'mid' }, { label: 'M', height: 24, level: 'low' }, { label: 'T', height: 32, level: 'low' }, { label: 'W', height: 48, level: 'mid' }, { label: 'TH', height: 56, level: 'mid' }, { label: 'F', height: 72, level: 'high' }, { label: 'S', height: 80, level: 'high' }, { label: 'SU', height: 64, level: 'mid' } ],
+    correlation: [ { trigger: 'Stress', width: 80, level: 'high', freq: '7×/wk' }, { trigger: 'Sadness', width: 70, level: 'high', freq: '6×/wk' }, { trigger: 'Social', width: 60, level: 'mid', freq: '5×/wk' }, { trigger: 'Boredom', width: 50, level: 'mid', freq: '4×/wk' }, { trigger: 'Pressure', width: 30, level: 'low', freq: '2×/wk' }, { trigger: 'After meals', width: 10, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 45,
+    bestMoodDay: 'Friday 🙂',
+    worstCravingDay: 'Thursday ⚠️',
+    highestRiskDay: 'Friday',
+    lastRelapse: 'None recorded',
+  },
+  2: { // Marco Kalaw — alert
+    moodWeek:   [ { emoji: '😫', label: 'MON' }, { emoji: '😫', label: 'TUE' }, { emoji: '🙁', label: 'WED' }, { emoji: '😫', label: 'THU' }, { emoji: '😫', label: 'FRI' }, { emoji: '🙁', label: 'SAT' }, { emoji: '😫', label: 'SUN' } ],
+    sparkline:  [ { height: 60, level: 'high' }, { height: 72, level: 'high' }, { height: 68, level: 'high' }, { height: 80, level: 'high' }, { height: 75, level: 'high' }, { height: 82, level: 'high' }, { height: 70, level: 'high' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: 'Relapsed', done: false }, { label: '30 days', sub: 'Not started', done: false }, { label: '60 days', sub: 'Not started', done: false }, { label: '90 days', sub: 'Not started', done: false } ],
+    streaks:    [ { label: 'M', height: 80, level: 'high' }, { label: 'T', height: 75, level: 'high' }, { label: 'W', height: 82, level: 'high' }, { label: 'TH', height: 78, level: 'high' }, { label: 'F', height: 85, level: 'high' }, { label: 'S', height: 80, level: 'high' }, { label: 'SU', height: 72, level: 'high' }, { label: 'M', height: 68, level: 'high' }, { label: 'T', height: 76, level: 'high' }, { label: 'W', height: 80, level: 'high' }, { label: 'TH', height: 85, level: 'high' }, { label: 'F', height: 90, level: 'high' }, { label: 'S', height: 82, level: 'high' }, { label: 'SU', height: 78, level: 'high' } ],
+    correlation: [ { trigger: 'Stress', width: 95, level: 'high', freq: '7×/wk' }, { trigger: 'Sadness', width: 88, level: 'high', freq: '7×/wk' }, { trigger: 'Social', width: 70, level: 'high', freq: '6×/wk' }, { trigger: 'Boredom', width: 60, level: 'mid', freq: '5×/wk' }, { trigger: 'Pressure', width: 50, level: 'mid', freq: '4×/wk' }, { trigger: 'After meals', width: 40, level: 'mid', freq: '3×/wk' } ],
+    cravingLevel: 85,
+    bestMoodDay: 'Wednesday 🙁',
+    worstCravingDay: 'Friday ⚠️',
+    highestRiskDay: 'Friday',
+    lastRelapse: '3 days ago',
+  },
+  3: { // Ana Navarro — stable
+    moodWeek:   [ { emoji: '🙂', label: 'MON' }, { emoji: '😁', label: 'TUE' }, { emoji: '🙂', label: 'WED' }, { emoji: '😁', label: 'THU' }, { emoji: '😁', label: 'FRI' }, { emoji: '😁', label: 'SAT' }, { emoji: '🙂', label: 'SUN' } ],
+    sparkline:  [ { height: 12, level: 'low' }, { height: 10, level: 'low' }, { height: 14, level: 'low' }, { height: 8, level: 'low' }, { height: 16, level: 'low' }, { height: 10, level: 'low' }, { height: 12, level: 'low' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: 'Achieved', done: true }, { label: '30 days', sub: 'Today!', done: true }, { label: '60 days', sub: '30 days left', done: false }, { label: '90 days', sub: '60 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 16, level: 'low' }, { label: 'T', height: 12, level: 'low' }, { label: 'W', height: 18, level: 'low' }, { label: 'TH', height: 14, level: 'low' }, { label: 'F', height: 20, level: 'low' }, { label: 'S', height: 16, level: 'low' }, { label: 'SU', height: 12, level: 'low' }, { label: 'M', height: 14, level: 'low' }, { label: 'T', height: 10, level: 'low' }, { label: 'W', height: 16, level: 'low' }, { label: 'TH', height: 12, level: 'low' }, { label: 'F', height: 18, level: 'low' }, { label: 'S', height: 14, level: 'low' }, { label: 'SU', height: 10, level: 'low' } ],
+    correlation: [ { trigger: 'Social', width: 40, level: 'mid', freq: '3×/wk' }, { trigger: 'Stress', width: 30, level: 'low', freq: '2×/wk' }, { trigger: 'Boredom', width: 20, level: 'low', freq: '2×/wk' }, { trigger: 'Sadness', width: 15, level: 'low', freq: '1×/wk' }, { trigger: 'Pressure', width: 10, level: 'low', freq: '1×/wk' }, { trigger: 'After meals', width: 5, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 12,
+    bestMoodDay: 'Saturday 😁',
+    worstCravingDay: 'Monday 😐',
+    highestRiskDay: 'Monday',
+    lastRelapse: 'None recorded',
+  },
+  4: { // Ben Panganiban — monitor
+    moodWeek:   [ { emoji: '😐', label: 'MON' }, { emoji: '😐', label: 'TUE' }, { emoji: '🙂', label: 'WED' }, { emoji: '😐', label: 'THU' }, { emoji: '😐', label: 'FRI' }, { emoji: '🙁', label: 'SAT' }, { emoji: '😐', label: 'SUN' } ],
+    sparkline:  [ { height: 40, level: 'mid' }, { height: 48, level: 'mid' }, { height: 36, level: 'mid' }, { height: 52, level: 'mid' }, { height: 44, level: 'mid' }, { height: 56, level: 'mid' }, { height: 48, level: 'mid' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: '7 days left', done: false }, { label: '30 days', sub: '23 days left', done: false }, { label: '60 days', sub: '53 days left', done: false }, { label: '90 days', sub: '83 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 40, level: 'mid' }, { label: 'T', height: 48, level: 'mid' }, { label: 'W', height: 36, level: 'mid' }, { label: 'TH', height: 52, level: 'mid' }, { label: 'F', height: 44, level: 'mid' }, { label: 'S', height: 60, level: 'high' }, { label: 'SU', height: 48, level: 'mid' }, { label: 'M', height: 38, level: 'mid' }, { label: 'T', height: 46, level: 'mid' }, { label: 'W', height: 40, level: 'mid' }, { label: 'TH', height: 50, level: 'mid' }, { label: 'F', height: 42, level: 'mid' }, { label: 'S', height: 56, level: 'mid' }, { label: 'SU', height: 44, level: 'mid' } ],
+    correlation: [ { trigger: 'Boredom', width: 75, level: 'high', freq: '6×/wk' }, { trigger: 'Stress', width: 55, level: 'mid', freq: '4×/wk' }, { trigger: 'Social', width: 45, level: 'mid', freq: '3×/wk' }, { trigger: 'After meals', width: 35, level: 'low', freq: '3×/wk' }, { trigger: 'Sadness', width: 25, level: 'low', freq: '2×/wk' }, { trigger: 'Pressure', width: 20, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 55,
+    bestMoodDay: 'Wednesday 🙂',
+    worstCravingDay: 'Saturday ⚠️',
+    highestRiskDay: 'Saturday',
+    lastRelapse: 'None recorded',
+  },
+  5: { // Carlo Mendoza — alert
+    moodWeek:   [ { emoji: '😫', label: 'MON' }, { emoji: '🙁', label: 'TUE' }, { emoji: '😫', label: 'WED' }, { emoji: '😫', label: 'THU' }, { emoji: '🙁', label: 'FRI' }, { emoji: '😫', label: 'SAT' }, { emoji: '😫', label: 'SUN' } ],
+    sparkline:  [ { height: 70, level: 'high' }, { height: 65, level: 'high' }, { height: 78, level: 'high' }, { height: 82, level: 'high' }, { height: 75, level: 'high' }, { height: 88, level: 'high' }, { height: 80, level: 'high' } ],
+    milestones: [ { label: '7 days', sub: 'Relapsed', done: false }, { label: '14 days', sub: 'Not started', done: false }, { label: '30 days', sub: 'Not started', done: false }, { label: '60 days', sub: 'Not started', done: false }, { label: '90 days', sub: 'Not started', done: false } ],
+    streaks:    [ { label: 'M', height: 70, level: 'high' }, { label: 'T', height: 65, level: 'high' }, { label: 'W', height: 78, level: 'high' }, { label: 'TH', height: 82, level: 'high' }, { label: 'F', height: 75, level: 'high' }, { label: 'S', height: 88, level: 'high' }, { label: 'SU', height: 80, level: 'high' }, { label: 'M', height: 72, level: 'high' }, { label: 'T', height: 68, level: 'high' }, { label: 'W', height: 80, level: 'high' }, { label: 'TH', height: 84, level: 'high' }, { label: 'F', height: 78, level: 'high' }, { label: 'S', height: 90, level: 'high' }, { label: 'SU', height: 82, level: 'high' } ],
+    correlation: [ { trigger: 'Sadness', width: 92, level: 'high', freq: '7×/wk' }, { trigger: 'Stress', width: 85, level: 'high', freq: '7×/wk' }, { trigger: 'Social', width: 65, level: 'high', freq: '5×/wk' }, { trigger: 'Boredom', width: 55, level: 'mid', freq: '4×/wk' }, { trigger: 'After meals', width: 45, level: 'mid', freq: '3×/wk' }, { trigger: 'Pressure', width: 38, level: 'mid', freq: '3×/wk' } ],
+    cravingLevel: 90,
+    bestMoodDay: 'Tuesday 🙁',
+    worstCravingDay: 'Saturday ⚠️',
+    highestRiskDay: 'Saturday',
+    lastRelapse: 'Today',
+  },
+  6: { // Jamie Lim — monitor/new
+    moodWeek:   [ { emoji: '😐', label: 'MON' }, { emoji: '😐', label: 'TUE' }, { emoji: '😐', label: 'WED' }, { emoji: '🙂', label: 'THU' }, { emoji: '😐', label: 'FRI' }, { emoji: '😐', label: 'SAT' }, { emoji: '😐', label: 'SUN' } ],
+    sparkline:  [ { height: 35, level: 'mid' }, { height: 42, level: 'mid' }, { height: 38, level: 'mid' }, { height: 30, level: 'mid' }, { height: 44, level: 'mid' }, { height: 40, level: 'mid' }, { height: 36, level: 'mid' } ],
+    milestones: [ { label: '7 days', sub: '6 days left', done: false }, { label: '14 days', sub: '13 days left', done: false }, { label: '30 days', sub: '29 days left', done: false }, { label: '60 days', sub: '59 days left', done: false }, { label: '90 days', sub: '89 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 35, level: 'mid' }, { label: 'T', height: 42, level: 'mid' }, { label: 'W', height: 38, level: 'mid' }, { label: 'TH', height: 30, level: 'mid' }, { label: 'F', height: 44, level: 'mid' }, { label: 'S', height: 40, level: 'mid' }, { label: 'SU', height: 36, level: 'mid' }, { label: 'M', height: 35, level: 'mid' }, { label: 'T', height: 42, level: 'mid' }, { label: 'W', height: 38, level: 'mid' }, { label: 'TH', height: 30, level: 'mid' }, { label: 'F', height: 44, level: 'mid' }, { label: 'S', height: 40, level: 'mid' }, { label: 'SU', height: 36, level: 'mid' } ],
+    correlation: [ { trigger: 'After meals', width: 65, level: 'high', freq: '5×/wk' }, { trigger: 'Stress', width: 45, level: 'mid', freq: '3×/wk' }, { trigger: 'Boredom', width: 35, level: 'mid', freq: '2×/wk' }, { trigger: 'Social', width: 30, level: 'low', freq: '2×/wk' }, { trigger: 'Sadness', width: 20, level: 'low', freq: '1×/wk' }, { trigger: 'Pressure', width: 15, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 42,
+    bestMoodDay: 'Thursday 🙂',
+    worstCravingDay: 'Friday ⚠️',
+    highestRiskDay: 'Friday',
+    lastRelapse: 'None recorded',
+  },
+  7: { // Ramon Torres — stable
+    moodWeek:   [ { emoji: '😁', label: 'MON' }, { emoji: '🙂', label: 'TUE' }, { emoji: '😁', label: 'WED' }, { emoji: '😁', label: 'THU' }, { emoji: '🙂', label: 'FRI' }, { emoji: '😁', label: 'SAT' }, { emoji: '😁', label: 'SUN' } ],
+    sparkline:  [ { height: 8, level: 'low' }, { height: 10, level: 'low' }, { height: 6, level: 'low' }, { height: 12, level: 'low' }, { height: 8, level: 'low' }, { height: 10, level: 'low' }, { height: 6, level: 'low' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: 'Achieved', done: true }, { label: '30 days', sub: 'Achieved', done: true }, { label: '60 days', sub: 'Today!', done: true }, { label: '90 days', sub: '30 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 10, level: 'low' }, { label: 'T', height: 8, level: 'low' }, { label: 'W', height: 12, level: 'low' }, { label: 'TH', height: 8, level: 'low' }, { label: 'F', height: 14, level: 'low' }, { label: 'S', height: 10, level: 'low' }, { label: 'SU', height: 8, level: 'low' }, { label: 'M', height: 10, level: 'low' }, { label: 'T', height: 8, level: 'low' }, { label: 'W', height: 12, level: 'low' }, { label: 'TH', height: 8, level: 'low' }, { label: 'F', height: 14, level: 'low' }, { label: 'S', height: 10, level: 'low' }, { label: 'SU', height: 8, level: 'low' } ],
+    correlation: [ { trigger: 'Pressure', width: 25, level: 'low', freq: '2×/wk' }, { trigger: 'Stress', width: 20, level: 'low', freq: '2×/wk' }, { trigger: 'Social', width: 15, level: 'low', freq: '1×/wk' }, { trigger: 'Boredom', width: 10, level: 'low', freq: '1×/wk' }, { trigger: 'After meals', width: 8, level: 'low', freq: '1×/wk' }, { trigger: 'Sadness', width: 5, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 8,
+    bestMoodDay: 'Saturday 😁',
+    worstCravingDay: 'Thursday 😐',
+    highestRiskDay: 'Thursday',
+    lastRelapse: 'None recorded',
+  },
+  8: { // Diana Cruz — monitor
+    moodWeek:   [ { emoji: '🙁', label: 'MON' }, { emoji: '😐', label: 'TUE' }, { emoji: '🙁', label: 'WED' }, { emoji: '😐', label: 'THU' }, { emoji: '🙁', label: 'FRI' }, { emoji: '😐', label: 'SAT' }, { emoji: '🙁', label: 'SUN' } ],
+    sparkline:  [ { height: 45, level: 'mid' }, { height: 50, level: 'mid' }, { height: 42, level: 'mid' }, { height: 55, level: 'mid' }, { height: 48, level: 'mid' }, { height: 52, level: 'mid' }, { height: 46, level: 'mid' } ],
+    milestones: [ { label: '7 days', sub: 'Achieved', done: true }, { label: '14 days', sub: 'Achieved', done: true }, { label: '30 days', sub: '9 days left', done: false }, { label: '60 days', sub: '39 days left', done: false }, { label: '90 days', sub: '69 days left', done: false } ],
+    streaks:    [ { label: 'M', height: 45, level: 'mid' }, { label: 'T', height: 50, level: 'mid' }, { label: 'W', height: 42, level: 'mid' }, { label: 'TH', height: 55, level: 'mid' }, { label: 'F', height: 60, level: 'high' }, { label: 'S', height: 52, level: 'mid' }, { label: 'SU', height: 46, level: 'mid' }, { label: 'M', height: 44, level: 'mid' }, { label: 'T', height: 48, level: 'mid' }, { label: 'W', height: 40, level: 'mid' }, { label: 'TH', height: 54, level: 'mid' }, { label: 'F', height: 58, level: 'mid' }, { label: 'S', height: 50, level: 'mid' }, { label: 'SU', height: 44, level: 'mid' } ],
+    correlation: [ { trigger: 'Social', width: 70, level: 'high', freq: '6×/wk' }, { trigger: 'Sadness', width: 60, level: 'mid', freq: '5×/wk' }, { trigger: 'Stress', width: 50, level: 'mid', freq: '4×/wk' }, { trigger: 'Boredom', width: 35, level: 'mid', freq: '3×/wk' }, { trigger: 'Pressure', width: 25, level: 'low', freq: '2×/wk' }, { trigger: 'After meals', width: 15, level: 'low', freq: '1×/wk' } ],
+    cravingLevel: 50,
+    bestMoodDay: 'Tuesday 😐',
+    worstCravingDay: 'Friday ⚠️',
+    highestRiskDay: 'Friday',
+    lastRelapse: '16 days ago',
+  },
+}
+
+// ── Mood log display options (read-only provider view) ────────
+export const moodLogOptions = [
+  { emoji: '😭', label: 'Awful' },
+  { emoji: '🙁', label: 'Bad' },
+  { emoji: '😐', label: 'Okay' },
+  { emoji: '🙂', label: 'Good' },
+  { emoji: '😄', label: 'Great' },
+]
+
+// ── Trigger tag display list (read-only provider view) ────────
+export const triggerTagList = ['Stress', 'Sadness', 'Social', 'Boredom', 'After meals', '+ Other']
+
+// ── Craving slider label thresholds ──────────────────────────
+export const cravingThresholds = [
+  { max: 30, label: 'Mild' },
+  { max: 60, label: 'Mild-Moderate' },
+  { max: 80, label: 'Moderate' },
+  { max: 100, label: 'Intense' },
+]
