@@ -31,7 +31,7 @@ const NAV_ITEMS = [
 
 const STATUS_COLOR = { stable: 'var(--green)', monitor: 'var(--amber)', alert: 'var(--red)' }
 
-function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patientsList = [] }) {
+function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patientsList = [], nurse }) {
   const [patientsOpen, setPatientsOpen] = useState(true)
 
   return (
@@ -56,8 +56,12 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, pat
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
-        <div style={{ color: 'var(--text-light)', fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name Surname</div>
-        <div style={{ color: 'var(--bg-canvas)', fontSize: 11, marginTop: 2 }}>nurse@email.com</div>
+        <div style={{ color: 'var(--text-light)', fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          {nurse?.name ?? '—'}
+        </div>
+        <div style={{ color: 'var(--bg-canvas)', fontSize: 11, marginTop: 2 }}>
+          {nurse?.email ?? '—'}
+        </div>
       </div>
 
       {/* ── Main nav items ── */}
@@ -85,7 +89,7 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, pat
                 <span>{item.label}</span>
               </div>
               {item.badge && (
-                <span style={{ background: '#c0392b', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
+                <span style={{ background: '#ec3c3c', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
                   {item.badge}
                 </span>
               )}

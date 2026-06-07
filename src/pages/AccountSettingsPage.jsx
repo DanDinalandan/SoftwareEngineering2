@@ -15,7 +15,7 @@ function Toggle({ defaultOn }) {
 }
 
 // ── Profile card (left column) ────────────────────────────────
-function ProfileCard() {
+function ProfileCard({ nurse }) {
   return (
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="settings-title">Profile</div>
@@ -31,14 +31,14 @@ function ProfileCard() {
       {/* Text fields */}
       <div className="field-group">
         <div className="field-label">Full name</div>
-        <input className="field-input" type="text" defaultValue="Name Surname" />
+        <input className="field-input" type="text" defaultValue={nurse?.name ?? ''} />
       </div>
 
       {/* Two fields side by side */}
       <div className="field-row">
         <div className="field-group">
           <div className="field-label">License No.</div>
-          <input className="field-input" type="text" defaultValue="RN-2024-001" />
+          <input className="field-input" type="text" defaultValue={nurse?.license ?? ''} />
         </div>
         <div className="field-group">
           <div className="field-label">Department</div>
@@ -48,12 +48,12 @@ function ProfileCard() {
 
       <div className="field-group">
         <div className="field-label">Email address</div>
-        <input className="field-input" type="email" defaultValue="nurse@email.com" />
+        <input className="field-input" type="email" defaultValue={nurse?.email ?? ''} />
       </div>
 
       <div className="field-group">
         <div className="field-label">Phone</div>
-        <input className="field-input" type="text" defaultValue="+63 912 345 6789" />
+        <input className="field-input" type="text" defaultValue={nurse?.phone ?? ''} />
       </div>
 
       <button className="btn-save">Save Profile</button>
@@ -130,18 +130,18 @@ function SignOutCard({ onLogout }) {
   return (
     <div className="card">
       <div className="settings-title">Session</div>
-      <button 
-        onClick={onLogout} 
-        style={{ 
-          width: '100%', 
-          background: 'rgba(187,127,226,0.15)', 
-          border: '1px solid rgba(187,127,226,0.4)', 
-          color: '#BB7FE2', 
-          padding: '12px 28px', 
-          borderRadius: 12, 
-          fontSize: 14, 
-          fontWeight: 700, 
-          cursor: 'pointer' 
+      <button
+        onClick={onLogout}
+        style={{
+          width: '100%',
+          background: 'rgba(187,127,226,0.15)',
+          border: '1px solid rgba(187,127,226,0.4)',
+          color: '#BB7FE2',
+          padding: '12px 28px',
+          borderRadius: 12,
+          fontSize: 14,
+          fontWeight: 700,
+          cursor: 'pointer'
         }}
       >
         Sign Out
@@ -151,14 +151,14 @@ function SignOutCard({ onLogout }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function AccountSettingsPage({ onLogout }) {
+function AccountSettingsPage({ onLogout, nurse }) {
   return (
     <div>
       <div className="settings-grid">
-        
+
         {/* Left column */}
         <div>
-          <ProfileCard />
+          <ProfileCard nurse={nurse} />
           <SecurityCard />
         </div>
 

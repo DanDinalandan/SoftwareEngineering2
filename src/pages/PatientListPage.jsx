@@ -1,14 +1,13 @@
 import { useState } from 'react'
-import { patients } from '../data/mockData.js'
 
 const FILTERS = ['All', 'Stable', 'Monitor', 'Alert', 'Inactive']
 
 // ── Summary cards at the top ──────────────────────────────────
-function SummaryCards() {
-  const total   = patients.length
-  const stable  = patients.filter(p => p.status === 'stable').length
-  const monitor = patients.filter(p => p.status === 'monitor').length
-  const alert   = patients.filter(p => p.status === 'alert').length
+function SummaryCards({ patientsList }) {
+  const total   = patientsList.length
+  const stable  = patientsList.filter(p => p.status === 'stable').length
+  const monitor = patientsList.filter(p => p.status === 'monitor').length
+  const alert   = patientsList.filter(p => p.status === 'alert').length
 
   return (
     <div className="pl-summary">
@@ -89,11 +88,11 @@ function PatientRow({ patient, onViewClick }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function PatientListPage({ onViewPatient }) {
+function PatientListPage({ patientsList = [], onViewPatient }) {
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchTerm,   setSearchTerm  ] = useState('')
 
-  const filtered = patients.filter((p) => {
+  const filtered = patientsList.filter((p) => {
     const matchesFilter =
       activeFilter === 'All' ||
       p.status === activeFilter.toLowerCase()
@@ -108,7 +107,7 @@ function PatientListPage({ onViewPatient }) {
   return (
     <div>
 
-      <SummaryCards />
+      <SummaryCards patientsList={patientsList} />
 
       <div className="toolbar">
         <input
@@ -146,7 +145,6 @@ function PatientListPage({ onViewPatient }) {
             </tr>
           </thead>
           <tbody>
-
             {filtered.map((p) => (
               <PatientRow key={p.id} patient={p} onViewClick={onViewPatient} />
             ))}
@@ -155,7 +153,7 @@ function PatientListPage({ onViewPatient }) {
       </div>
 
       <div style={{ marginTop: 12, fontSize: 12, color: 'var(--text-muted)', textAlign: 'right' }}>
-        Showing {filtered.length} of {patients.length} patients
+        Showing {filtered.length} of {patientsList.length} patients
       </div>
     </div>
   )

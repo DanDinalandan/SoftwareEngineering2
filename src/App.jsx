@@ -9,39 +9,37 @@ import AccountSettingsPage from './pages/AccountSettingsPage.jsx'
 import MessagesPage        from './pages/MessagesPage.jsx'
 import LoginPage           from './pages/LoginPage.jsx'
 import SignupPage          from './pages/SignupPage.jsx'
-import { api }          from './services/api.js'
+import { api }             from './services/api.js'
 
 export default function App() {
-  // ── Local Auth State ──
-  const [nurse, setNurse]                   = useState(null)
-  const [authScreen, setAuthScreen]         = useState('login')
-  
-  // ── Local App State ──
-  const [activePage, setActivePage]         = useState('dashboard')
-  const [notifOpen, setNotifOpen]           = useState(false)
-  const [activePatientId, setActivePatientId] = useState(1)
-  
-  // ── Async Data State ──
+  // ── Auth State ──
+  const [nurse, setNurse]           = useState(null)
+  const [authScreen, setAuthScreen] = useState('login')
+
+  // ── App Navigation State ──
+  const [activePage, setActivePage]               = useState('dashboard')
+  const [notifOpen, setNotifOpen]                 = useState(false)
+  const [activePatientId, setActivePatientId]     = useState(1)
+
+  // ── Patient Roster State (loaded once after login) ──
   const [patientsList, setPatientsList] = useState([])
   const [isLoading, setIsLoading]       = useState(false)
 
   useEffect(() => {
-    if (nurse) {
-      setIsLoading(true)
-      api.getPatients()
-        .then((data) => {
-          setPatientsList(data)
-          if (data.length > 0 && !activePatientId) setActivePatientId(data[0].id)
-        })
-        .catch((err) => console.error("Failed to load patients:", err))
-        .finally(() => setIsLoading(false))
-    }
+    if (!nurse) return
+    setIsLoading(true)
+    api.getPatients()
+      .then((data) => {
+        setPatientsList(data)
+        if (data.length > 0 && !activePatientId) setActivePatientId(data[0].id)
+      })
+      .catch((err) => console.error('Failed to load patients:', err))
+      .finally(() => setIsLoading(false))
   }, [nurse])
 
   // ── Auth Handlers ──
   function handleLogin(nurseData) {
     setNurse(nurseData)
-    setAuthScreen('app')
   }
 
   function handleLogout() {
@@ -51,8 +49,11 @@ export default function App() {
     setPatientsList([])
   }
 
+  // ── Auth Gate ──
   if (!nurse) {
-    if (authScreen === 'signup') return <SignupPage onSignup={handleLogin} onGoToLogin={() => setAuthScreen('login')} />
+    if (authScreen === 'signup') {
+      return <SignupPage onSignup={handleLogin} onGoToLogin={() => setAuthScreen('login')} />
+    }
     return <LoginPage onLogin={handleLogin} onGoToSignup={() => setAuthScreen('signup')} />
   }
 
@@ -64,13 +65,13 @@ export default function App() {
     )
   }
 
-  // ── Render Main App ──
+  // ── Main App ──
   const PAGES = {
-    dashboard: <DashboardPage activePatientId={activePatientId} allPatients={patientsList} onSelectPatient={setActivePatientId} />,
+    dashboard:  <DashboardPage activePatientId={activePatientId} allPatients={patientsList} onSelectPatient={setActivePatientId} />,
     statistics: <StatisticsPage activePatientId={activePatientId} />,
-    patients:   <PatientListPage activePatientId={activePatientId} patientsList={patientsList} onViewPatient={(id) => { setActivePatientId(id); setActivePage('statistics');}}/>,
+    patients:   <PatientListPage patientsList={patientsList} onViewPatient={(id) => { setActivePatientId(id); setActivePage('statistics') }} />,
     messages:   <MessagesPage />,
-    account:    <AccountSettingsPage onLogout={handleLogout} />,
+    account:    <AccountSettingsPage onLogout={handleLogout} nurse={nurse} />,
   }
 
   return (
@@ -82,6 +83,7 @@ export default function App() {
         patientsList={patientsList}
         onSelectPatient={setActivePatientId}
         onOpenNotifs={() => setNotifOpen(true)}
+        nurse={nurse}
       />
 
       <main className="main-content">

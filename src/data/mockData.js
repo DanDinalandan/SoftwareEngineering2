@@ -1,3 +1,14 @@
+// ── Nurse (provider) ───────────────
+export const nurseProfile = {
+  id:         'nurse-001',
+  name:       'Nursita Santos',
+  email:      'maria.santos@unvapeify.com',
+  license:    'RN-2024-001',
+  department: 'Cessation Clinic',
+  phone:      '+63 912 345 6789',
+}
+
+// ── Patients ──────────────────────────
 export const patients = [
   {
     id: 1,
@@ -6,7 +17,7 @@ export const patients = [
     emoji: '👦🏻',
     age: 22, sex: 'F',
     day: 14, streak: 14, streakLabel: '14 days',
-    lastMood: '😐 Okay',
+    lastMood: '😐 Okay', todaysMood: 'Okay',
     topTrigger: 'Stress', triggerLevel: 'normal',
     riskScore: 28, riskColor: 'var(--green)',
     status: 'stable',
@@ -18,7 +29,7 @@ export const patients = [
     emoji: '👨🏻',
     age: 19, sex: 'M',
     day: 3, streak: 0, streakLabel: '0 days',
-    lastMood: '😫 Awful',
+    lastMood: '😫 Awful', todaysMood: 'Awful',
     topTrigger: 'Stress', triggerLevel: 'high',
     riskScore: 78, riskColor: 'var(--red)',
     status: 'alert',
@@ -30,7 +41,7 @@ export const patients = [
     emoji: '👩🏻',
     age: 28, sex: 'F',
     day: 30, streak: 30, streakLabel: '30 days',
-    lastMood: '🙂 Good',
+    lastMood: '🙂 Good', todaysMood: 'Good',
     topTrigger: 'Social', triggerLevel: 'normal',
     riskScore: 14, riskColor: 'var(--green)',
     status: 'stable',
@@ -42,7 +53,7 @@ export const patients = [
     emoji: '👨🏽',
     age: 25, sex: 'M',
     day: 7, streak: 7, streakLabel: '7 days',
-    lastMood: '😐 Okay',
+    lastMood: '😐 Okay', todaysMood: 'Okay',
     topTrigger: 'Boredom', triggerLevel: 'normal',
     riskScore: 51, riskColor: 'var(--amber)',
     status: 'monitor',
@@ -54,7 +65,7 @@ export const patients = [
     emoji: '👩🏻',
     age: 21, sex: 'M',
     day: 5, streak: 0, streakLabel: 'Relapsed',
-    lastMood: '😫 Awful',
+    lastMood: '😫 Awful', todaysMood: 'Awful',
     topTrigger: 'Sadness', triggerLevel: 'high',
     riskScore: 83, riskColor: 'var(--red)',
     status: 'alert',
@@ -66,7 +77,7 @@ export const patients = [
     emoji: '👩🏽',
     age: 23, sex: 'F',
     day: 1, streak: 0, streakLabel: 'New',
-    lastMood: '😐 Okay',
+    lastMood: '😐 Okay', todaysMood: 'Okay',
     topTrigger: 'After meals', triggerLevel: 'normal',
     riskScore: 42, riskColor: 'var(--amber)',
     status: 'monitor',
@@ -78,7 +89,7 @@ export const patients = [
     emoji: '👴🏻',
     age: 45, sex: 'M',
     day: 60, streak: 60, streakLabel: '60 days',
-    lastMood: '😁 Great',
+    lastMood: '😁 Great', todaysMood: 'Great',
     topTrigger: 'Pressure', triggerLevel: 'normal',
     riskScore: 9, riskColor: 'var(--green)',
     status: 'stable',
@@ -90,7 +101,7 @@ export const patients = [
     emoji: '👩🏼',
     age: 31, sex: 'F',
     day: 21, streak: 5, streakLabel: '5 days',
-    lastMood: '🙁 Bad',
+    lastMood: '🙁 Bad', todaysMood: 'Bad',
     topTrigger: 'Social', triggerLevel: 'normal',
     riskScore: 47, riskColor: 'var(--amber)',
     status: 'monitor',
@@ -110,66 +121,12 @@ export const notifications = [
   { id: 10, type: 'info',    icon: '🆕', title: 'New patient enrolled — Jamie L.', desc: 'A new patient has been added to your monitoring list. Day 1 begins today.',           time: 'May 20 · 9:00 AM',   unread: false },
 ]
 
-export const correlationData = [
-  { trigger: 'Stress',      width: 80, level: 'high', freq: '7×/wk' },
-  { trigger: 'Sadness',     width: 70, level: 'high', freq: '6×/wk' },
-  { trigger: 'Social',      width: 60, level: 'mid',  freq: '5×/wk' },
-  { trigger: 'Boredom',     width: 50, level: 'mid',  freq: '4×/wk' },
-  { trigger: 'Pressure',    width: 30, level: 'low',  freq: '2×/wk' },
-  { trigger: 'After meals', width: 10, level: 'low',  freq: '1×/wk' },
-]
-
-export const streakBars = [
-  { label: 'M',  height: 24, level: 'low'  },
-  { label: 'T',  height: 32, level: 'low'  },
-  { label: 'W',  height: 48, level: 'mid'  },
-  { label: 'TH', height: 56, level: 'mid'  },
-  { label: 'F',  height: 64, level: 'high' },
-  { label: 'S',  height: 80, level: 'high' },
-  { label: 'SU', height: 56, level: 'mid'  },
-  { label: 'M',  height: 24, level: 'low'  },
-  { label: 'T',  height: 32, level: 'low'  },
-  { label: 'W',  height: 48, level: 'mid'  },
-  { label: 'TH', height: 56, level: 'mid'  },
-  { label: 'F',  height: 72, level: 'high' },
-  { label: 'S',  height: 80, level: 'high' },
-  { label: 'SU', height: 64, level: 'mid'  },
-]
-
-export const moodWeek = [
-  { emoji: '😐', label: 'MON' },
-  { emoji: '🙁', label: 'TUE' },
-  { emoji: '😐', label: 'WED' },
-  { emoji: '😐', label: 'THU' },
-  { emoji: '🙂', label: 'FRI' },
-  { emoji: '🙂', label: 'SAT' },
-  { emoji: '😐', label: 'SUN' },
-]
-
-export const sparklineData = [
-  { height: 18, level: 'low'  },
-  { height: 26, level: 'mid'  },
-  { height: 30, level: 'mid'  },
-  { height: 38, level: 'high' },
-  { height: 35, level: 'high' },
-  { height: 24, level: 'mid'  },
-  { height: 16, level: 'low'  },
-]
-
-export const milestones = [
-  { label: '7 days',  sub: 'Achieved',     done: true  },
-  { label: '14 days', sub: 'Today',        done: true  },
-  { label: '30 days', sub: '16 days left', done: false },
-  { label: '60 days', sub: '46 days left', done: false },
-  { label: '90 days', sub: '76 days left', done: false },
-]
-
 export const activityLog = [
-  { icon: '📋', text: "Viewed Louise Reyes' dashboard",       time: 'Today · 10:05 AM'    },
-  { icon: '🔔', text: 'Dismissed alert for Marco Kalaw',      time: 'Today · 09:48 AM'    },
-  { icon: '✏️', text: 'Updated notification preferences',     time: 'Yesterday · 3:12 PM' },
-  { icon: '💬', text: 'Replied to patient message — Louise R.', time: 'May 21 · 9:30 PM'  },
-  { icon: '🔐', text: 'Password changed successfully',         time: 'May 18 · 11:00 AM'  },
+  { icon: '📋', text: "Viewed Louise Reyes' dashboard",         time: 'Today · 10:05 AM'    },
+  { icon: '🔔', text: 'Dismissed alert for Marco Kalaw',        time: 'Today · 09:48 AM'    },
+  { icon: '✏️', text: 'Updated notification preferences',       time: 'Yesterday · 3:12 PM' },
+  { icon: '💬', text: 'Replied to patient message — Louise R.', time: 'May 21 · 9:30 PM'    },
+  { icon: '🔐', text: 'Password changed successfully',           time: 'May 18 · 11:00 AM'  },
 ]
 
 export const prefToggles = [
@@ -182,25 +139,6 @@ export const prefToggles = [
   { label: 'New patient enrollment',     sub: 'When a patient is assigned to you',           defaultOn: true  },
   { label: 'Relapse self-report',        sub: 'Immediate alert when patient reports vaping', defaultOn: true  },
 ]
-
-export const moodOptions = [
-  { emoji: "😫", label: "Awful" },
-  { emoji: "🙁", label: "Bad" },
-  { emoji: "😐", label: "Okay", isSelected: true },
-  { emoji: "🙂", label: "Good" },
-  { emoji: "😁", label: "Great" }
-];
-
-export const triggerTags = ["Stress", "Sadness", "Social", "Boredom", "After meals"];
-
-export const currentPatient = {
-  name:      'Patient Name',
-  email:     'Patient@email.com',
-  emoji:     '👦🏻',
-  sex:       'M',
-  age:       23,
-  condition: 'Nicotine Addiction',
-}
 
 // ── messages mock data ────────────────────────────────────────
 export const messages = [
@@ -255,6 +193,7 @@ export const messages = [
     unread: false,
   },
 ]
+
 // ── Per-patient statistics data ───────────────────────────────
 export const patientStats = {
   1: { // Louise Reyes — stable
@@ -369,8 +308,8 @@ export const triggerTagList = ['Stress', 'Sadness', 'Social', 'Boredom', 'After 
 
 // ── Craving slider label thresholds ──────────────────────────
 export const cravingThresholds = [
-  { max: 30, label: 'Mild' },
-  { max: 60, label: 'Mild-Moderate' },
-  { max: 80, label: 'Moderate' },
+  { max: 30,  label: 'Mild' },
+  { max: 60,  label: 'Mild-Moderate' },
+  { max: 80,  label: 'Moderate' },
   { max: 100, label: 'Intense' },
 ]

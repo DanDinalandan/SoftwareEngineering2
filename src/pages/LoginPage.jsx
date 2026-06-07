@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import logo from '../assets/logo.png'
+import { api } from '../services/api.js'
 
 export default function LoginPage({ onLogin, onGoToSignup }) {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = (e) => {
-    e.preventDefault() // Prevents page reload
-    
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
     if (!email || !password) {
       setError('Error: Please fill in all required fields.')
       return
@@ -19,27 +21,29 @@ export default function LoginPage({ onLogin, onGoToSignup }) {
     }
 
     setError('')
-    onLogin({ name: 'Louise Reyes', email: email })
+    setIsLoading(true)
+    try {
+      const nurseData = await api.getNurseProfile()
+      onLogin({ ...nurseData, email })
+    } catch (err) {
+      setError('Login failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <div className="auth-container">
       <div className="card auth-card">
 
-        <img 
-          src={logo} 
-          alt="UNVAPEIFY" 
-          style={{ 
-          width: '120px',
-          height: 'auto', 
-          display: 'block', 
-          margin: '0 auto 8px' 
-          }} 
-/>
+        <img
+          src={logo}
+          alt="UNVAPEIFY"
+          style={{ width: '120px', height: 'auto', display: 'block', margin: '0 auto 8px' }}
+        />
         <h2 style={{ textAlign: 'center', marginBottom: '8px', color: 'var(--text-dark)', fontSize: '28px', fontWeight: 800 }}>UNVAPEIFY</h2>
         <p style={{ textAlign: 'center', marginBottom: '24px', color: 'var(--text-muted)', fontSize: '13px' }}>Provider Portal Login</p>
 
-        {/* Displays the red error box if validation fails */}
         {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -65,8 +69,13 @@ export default function LoginPage({ onLogin, onGoToSignup }) {
             />
           </div>
 
-          <button type="submit" className="btn-save" style={{ width: '100%', marginTop: '16px', fontSize: '15px' }}>
-            Sign In
+          <button
+            type="submit"
+            className="btn-save"
+            style={{ width: '100%', marginTop: '16px', fontSize: '15px' }}
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
