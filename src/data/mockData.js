@@ -8,6 +8,80 @@ export const nurseProfile = {
   phone:      '+63 912 345 6789',
 }
 
+// ── Per-patient daily log history (mock backend rows) ─────────
+// In production, replace api.getPatientLogHistory with GET /api/patients/:id/logs
+export const patientLogHistory = {
+  1: [ // Louise Reyes
+    { date: 'Today',         mood: 'Okay', triggers: ['Stress', 'Social'],   cravingLevel: 45, vapedToday: 'No',  notes: 'Felt stressed during the afternoon, but used breathing exercises to cope.' },
+    { date: 'Yesterday',     mood: 'Bad',  triggers: ['Boredom'],             cravingLevel: 70, vapedToday: 'No',  notes: 'Cravings hit hard in the evening while watching TV.' },
+    { date: 'May 18, 2026',  mood: 'Awful',triggers: ['Sadness', 'Stress'],  cravingLevel: 85, vapedToday: 'Yes', notes: 'Relapsed after a rough day. Need to reset my streak.' },
+    { date: 'May 17, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 20, vapedToday: 'No',  notes: 'Kept myself busy with work. Barely thought about it.' },
+    { date: 'May 16, 2026',  mood: 'Okay', triggers: ['After meals'],        cravingLevel: 40, vapedToday: 'No',  notes: '' },
+    { date: 'May 15, 2026',  mood: 'Great',triggers: [],                     cravingLevel: 10, vapedToday: 'No',  notes: 'Went for a run. Feeling energetic.' },
+    { date: 'May 14, 2026',  mood: 'Okay', triggers: ['Social'],             cravingLevel: 55, vapedToday: 'No',  notes: "Hung out with friends who vape. It was tough but I held my ground." },
+  ],
+  2: [ // Marco Kalaw
+    { date: 'Today',         mood: 'Awful',triggers: ['Stress'],             cravingLevel: 90, vapedToday: 'Yes', notes: 'Gave in today. Really struggling.' },
+    { date: 'Yesterday',     mood: 'Awful',triggers: ['Stress', 'Sadness'],  cravingLevel: 88, vapedToday: 'Yes', notes: 'Two days in a row. Need help.' },
+    { date: 'May 18, 2026',  mood: 'Bad',  triggers: ['Boredom'],            cravingLevel: 75, vapedToday: 'No',  notes: 'Managed to stop myself this time.' },
+    { date: 'May 17, 2026',  mood: 'Awful',triggers: ['Social', 'Pressure'], cravingLevel: 82, vapedToday: 'Yes', notes: 'Friends were vaping outside again.' },
+    { date: 'May 16, 2026',  mood: 'Bad',  triggers: ['Sadness'],            cravingLevel: 78, vapedToday: 'No',  notes: '' },
+    { date: 'May 15, 2026',  mood: 'Okay', triggers: [],                     cravingLevel: 60, vapedToday: 'No',  notes: 'Better day. Stayed home.' },
+    { date: 'May 14, 2026',  mood: 'Bad',  triggers: ['Stress'],             cravingLevel: 72, vapedToday: 'No',  notes: 'Exams week is really hard.' },
+  ],
+  3: [ // Ana Navarro
+    { date: 'Today',         mood: 'Good', triggers: ['Social'],             cravingLevel: 15, vapedToday: 'No',  notes: 'Feeling proud. 30 days today!' },
+    { date: 'Yesterday',     mood: 'Great',triggers: [],                     cravingLevel: 8,  vapedToday: 'No',  notes: 'Best day in weeks.' },
+    { date: 'May 18, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 12, vapedToday: 'No',  notes: '' },
+    { date: 'May 17, 2026',  mood: 'Good', triggers: ['Stress'],             cravingLevel: 20, vapedToday: 'No',  notes: 'Work was hectic but I stayed strong.' },
+    { date: 'May 16, 2026',  mood: 'Okay', triggers: [],                     cravingLevel: 18, vapedToday: 'No',  notes: '' },
+    { date: 'May 15, 2026',  mood: 'Great',triggers: [],                     cravingLevel: 5,  vapedToday: 'No',  notes: 'Went hiking. Pure joy.' },
+    { date: 'May 14, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 10, vapedToday: 'No',  notes: '' },
+  ],
+  4: [ // Ben Panganiban
+    { date: 'Today',         mood: 'Okay', triggers: ['Boredom'],            cravingLevel: 55, vapedToday: 'No',  notes: 'Long evening. Hard to stay occupied.' },
+    { date: 'Yesterday',     mood: 'Okay', triggers: ['After meals'],        cravingLevel: 48, vapedToday: 'No',  notes: '' },
+    { date: 'May 18, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 35, vapedToday: 'No',  notes: 'Played basketball. Helped a lot.' },
+    { date: 'May 17, 2026',  mood: 'Bad',  triggers: ['Boredom', 'Stress'],  cravingLevel: 65, vapedToday: 'No',  notes: 'Restless night. Almost relapsed.' },
+    { date: 'May 16, 2026',  mood: 'Okay', triggers: ['Boredom'],            cravingLevel: 50, vapedToday: 'No',  notes: '' },
+    { date: 'May 15, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 30, vapedToday: 'No',  notes: 'Productive day.' },
+    { date: 'May 14, 2026',  mood: 'Okay', triggers: ['After meals'],        cravingLevel: 45, vapedToday: 'No',  notes: '' },
+  ],
+  5: [ // Carlo Mendoza
+    { date: 'Today',         mood: 'Awful',triggers: ['Sadness', 'Stress'],  cravingLevel: 95, vapedToday: 'Yes', notes: 'Cannot stop. Everything is a trigger.' },
+    { date: 'Yesterday',     mood: 'Bad',  triggers: ['Sadness'],            cravingLevel: 82, vapedToday: 'Yes', notes: '' },
+    { date: 'May 18, 2026',  mood: 'Awful',triggers: ['Social', 'Stress'],   cravingLevel: 88, vapedToday: 'Yes', notes: 'Went out with old friends. Made it worse.' },
+    { date: 'May 17, 2026',  mood: 'Bad',  triggers: ['Boredom'],            cravingLevel: 70, vapedToday: 'No',  notes: 'Managed one day.' },
+    { date: 'May 16, 2026',  mood: 'Awful',triggers: ['Sadness'],            cravingLevel: 90, vapedToday: 'Yes', notes: '' },
+    { date: 'May 15, 2026',  mood: 'Bad',  triggers: ['Stress'],             cravingLevel: 78, vapedToday: 'Yes', notes: 'Rough week overall.' },
+    { date: 'May 14, 2026',  mood: 'Okay', triggers: [],                     cravingLevel: 55, vapedToday: 'No',  notes: 'Started the week okay.' },
+  ],
+  6: [ // Jamie Lim
+    { date: 'Today',         mood: 'Okay', triggers: ['After meals'],        cravingLevel: 42, vapedToday: 'No',  notes: 'Day 1. Hard but managed.' },
+    { date: 'May 18, 2026',  mood: 'Okay', triggers: ['Stress'],             cravingLevel: 38, vapedToday: 'No',  notes: '' },
+    { date: 'May 17, 2026',  mood: 'Okay', triggers: ['After meals'],        cravingLevel: 44, vapedToday: 'No',  notes: '' },
+    { date: 'May 16, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 30, vapedToday: 'No',  notes: 'Best day yet.' },
+  ],
+  7: [ // Ramon Torres
+    { date: 'Today',         mood: 'Great',triggers: [],                     cravingLevel: 8,  vapedToday: 'No',  notes: '60 days today. Cannot believe it.' },
+    { date: 'Yesterday',     mood: 'Good', triggers: ['Pressure'],           cravingLevel: 12, vapedToday: 'No',  notes: '' },
+    { date: 'May 18, 2026',  mood: 'Great',triggers: [],                     cravingLevel: 6,  vapedToday: 'No',  notes: '' },
+    { date: 'May 17, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 10, vapedToday: 'No',  notes: '' },
+    { date: 'May 16, 2026',  mood: 'Great',triggers: [],                     cravingLevel: 8,  vapedToday: 'No',  notes: 'Running every morning helps.' },
+    { date: 'May 15, 2026',  mood: 'Good', triggers: ['Pressure'],           cravingLevel: 15, vapedToday: 'No',  notes: '' },
+    { date: 'May 14, 2026',  mood: 'Great',triggers: [],                     cravingLevel: 7,  vapedToday: 'No',  notes: '' },
+  ],
+  8: [ // Diana Cruz
+    { date: 'Today',         mood: 'Bad',  triggers: ['Social'],             cravingLevel: 52, vapedToday: 'No',  notes: 'Tough social event but held firm.' },
+    { date: 'Yesterday',     mood: 'Okay', triggers: ['Sadness'],            cravingLevel: 46, vapedToday: 'No',  notes: '' },
+    { date: 'May 18, 2026',  mood: 'Bad',  triggers: ['Social', 'Stress'],   cravingLevel: 60, vapedToday: 'No',  notes: 'Almost gave in. Very close.' },
+    { date: 'May 17, 2026',  mood: 'Okay', triggers: [],                     cravingLevel: 40, vapedToday: 'No',  notes: '' },
+    { date: 'May 16, 2026',  mood: 'Bad',  triggers: ['Social'],             cravingLevel: 55, vapedToday: 'No',  notes: '' },
+    { date: 'May 15, 2026',  mood: 'Good', triggers: [],                     cravingLevel: 28, vapedToday: 'No',  notes: 'Stayed home. Peaceful day.' },
+    { date: 'May 14, 2026',  mood: 'Okay', triggers: ['Boredom'],            cravingLevel: 44, vapedToday: 'No',  notes: '' },
+  ],
+}
+
 // ── Patients ──────────────────────────
 export const patients = [
   {
@@ -312,4 +386,11 @@ export const cravingThresholds = [
   { max: 60,  label: 'Mild-Moderate' },
   { max: 80,  label: 'Moderate' },
   { max: 100, label: 'Intense' },
+]
+// ── Notification filter config ────────────────────────────────
+export const notificationFilters = [
+  { label: 'All',        fn: () => true },
+  { label: 'Alerts',     fn: (n) => n.type === 'alert' },
+  { label: 'Updates',    fn: (n) => n.type === 'info' || n.type === 'warning' },
+  { label: 'Milestones', fn: (n) => n.type === 'success' },
 ]

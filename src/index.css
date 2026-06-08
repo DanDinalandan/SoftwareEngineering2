@@ -51,6 +51,11 @@ body {
   overflow: hidden;
 }
 
+aside {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
+
 /* ── Main scrollable area ── */
 .main-content {
   flex: 1;
@@ -347,7 +352,7 @@ body {
 .mood-day-col   { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
 .mood-emoji     { font-size: 20px; }
 .mood-day-label { font-size: 9px; color: var(--text-muted); font-weight: 700; }
-.sparkline      { display: flex; align-items: flex-end; gap: 4px; height: 40px; }
+.sparkline      { display: flex; align-items: flex-end; gap: 4px; height: 50px; }
 .spark-bar      { flex: 1; border-radius: 2px 2px 0 0; min-width: 6px; }
 
 /* ════════════════════════════════════════
@@ -617,7 +622,15 @@ body {
   color: #FFFFFF;
 }
 
-.np-list { flex: 1; overflow-y: auto; padding: 0 24px 24px; display: flex; flex-direction: column; gap: 10px; }
+.np-list { 
+  flex: 1; overflow-y: auto; 
+  padding: 0 24px 24px; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 10px; 
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
+}
 
 .notif-item {
   background: var(--surface-2);
@@ -1194,3 +1207,405 @@ body {
   box-shadow: 0 2px 8px rgba(91, 104, 228, 0.3);
 }
 .btn-reply:hover { background-color: #4A57D4; }
+/* ════════════════════════════════════════
+   NOTIFICATIONS — NEW ADDITIONS
+   ════════════════════════════════════════ */
+
+/* ── Bell badge (unread count on header bell) ── */
+.bell-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: var(--red);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+  border: 2px solid var(--bg-sidebar);
+  pointer-events: none;
+}
+
+/* ── Unread notification item highlight ── */
+.notif-item.unread-item {
+  background: var(--surface-1);
+  box-shadow: 0 1px 6px rgba(30, 33, 71, 0.08);
+}
+.notif-item.unread-item:hover {
+  background: rgba(132, 144, 244, 0.05);
+}
+
+/* ── Unread count badge inside the panel header ── */
+.np-unread-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+
+/* ── Mark all read button inside the panel header ── */
+.np-mark-all-btn {
+  background: none;
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.np-mark-all-btn:hover {
+  border-color: var(--bg-highlight);
+  color: var(--bg-highlight);
+}
+/* ════════════════════════════════════════
+   HISTORY PAGE
+   ════════════════════════════════════════ */
+
+/* ── Page header row ── */
+.hist-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.hist-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.hist-filter-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Back button ── */
+.hist-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-1);
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-dark);
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.hist-back-btn:hover {
+  border-color: var(--bg-highlight);
+  color: var(--bg-highlight);
+}
+
+/* ── Patient identity block (next to back button) ── */
+.hist-patient-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hist-avatar { font-size: 18px; }
+.hist-patient-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-dark);
+}
+.hist-patient-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Summary stat row ── */
+.hist-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.hist-sum-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ── Table shell ── */
+.hist-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Clickable table row ── */
+.hist-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.hist-row:hover td { background: var(--surface-2); }
+.hist-row.expanded td { background: var(--surface-2); }
+
+/* ── Date cell ── */
+.hist-date {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ── Mood cell ── */
+.hist-mood-emoji {
+  font-size: 18px;
+  margin-right: 6px;
+}
+.hist-mood-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+/* ── Craving text ── */
+.hist-craving-text {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ── None label ── */
+.hist-none-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ── Expand chevron ── */
+.hist-chevron {
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+/* ── Expanded cell wrapper ── */
+.hist-expanded-cell {
+  padding: 0;
+  background: var(--surface-2);
+  border-bottom: 2px solid var(--border-subtle);
+}
+
+/* ── Expanded detail panel ── */
+.hist-expanded {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.hist-expanded-section {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.hist-expanded-last {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.hist-section-label {
+  margin-bottom: 10px;
+}
+
+/* ── Mood chips inside expanded row ── */
+.hist-mood-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.hist-mood-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface-1);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 56px;
+}
+.hist-mood-chip.selected {
+  background: var(--bg-highlight);
+  border-color: var(--bg-highlight);
+}
+.hist-mood-chip-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.hist-mood-chip.selected .hist-mood-chip-label {
+  color: #fff;
+}
+.hist-chip-faded { opacity: 0.25; }
+
+/* ── Trigger tags inside expanded row ── */
+.hist-trigger-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.hist-tag-active {
+  background: var(--bg-highlight) !important;
+  color: #fff !important;
+  border-color: var(--bg-highlight) !important;
+  opacity: 1;
+}
+.hist-tag-inactive { opacity: 0.3; }
+.hist-no-triggers {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ── Craving intensity bar ── */
+.hist-craving-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hist-craving-track {
+  flex: 1;
+  background: var(--surface-1);
+  border-radius: 8px;
+  height: 10px;
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+}
+.hist-craving-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
+.hist-craving-label {
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 110px;
+  white-space: nowrap;
+}
+
+/* ── Vaping chips ── */
+.hist-vape-row  { display: flex; gap: 8px; }
+.hist-vape-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1.5px solid var(--border-subtle);
+}
+.hist-vape-clean   { background: rgba(47,206,156,0.12); border-color: var(--green);  color: var(--green);  font-weight: 700; }
+.hist-vape-relapse { background: rgba(246,95,95,0.10);  border-color: var(--red);    color: var(--red);    font-weight: 700; }
+.hist-vape-dim     { background: var(--surface-1); color: var(--text-muted); font-weight: 400; }
+
+/* ── Patient note ── */
+.hist-note-text {
+  font-size: 13px;
+  color: var(--text-dark);
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* ── Loading / empty states ── */
+.hist-loading {
+  display: flex;
+  justify-content: center;
+  padding: 80px 0;
+  color: var(--text-muted);
+}
+.hist-empty {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--text-muted);
+}
+.hist-empty-icon { font-size: 32px; margin-bottom: 12px; }
+.hist-empty-text { font-weight: 600; }
+
+/* ── Footer count ── */
+.hist-footer {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* ════════════════════════════════════════
+   STATISTICS PAGE — PATIENT BANNER
+   ════════════════════════════════════════ */
+.stat-patient-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-1);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 4px rgba(30,33,71,0.06);
+}
+.stat-banner-avatar { font-size: 20px; }
+.stat-banner-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+.stat-banner-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-banner-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin: 0 4px;
+}
+
+/* ════════════════════════════════════════
+   MESSAGES PAGE — UNREAD STATE
+   ════════════════════════════════════════ */
+
+/* ── Header row with unread badge ── */
+.inbox-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+/* Override existing .inbox-header-title padding since it moves into inbox-header-row */
+.inbox-header-row .inbox-header-title {
+  padding: 0;
+  border-bottom: none;
+}
+
+/* ── Unread count badge in inbox header ── */
+.inbox-unread-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  min-width: 22px;
+  text-align: center;
+}
+
+/* ── Bold sender + subject when message is unread ── */
+.inbox-item-unread { background: var(--surface-1); }
+.inbox-item-unread:hover { background: rgba(132,144,244,0.05); }
+.inbox-sender-unread  { font-weight: 800; color: var(--text-dark); }
+.inbox-subject-unread { font-weight: 800; color: var(--text-dark); }

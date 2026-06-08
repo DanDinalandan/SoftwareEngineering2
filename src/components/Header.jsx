@@ -1,11 +1,10 @@
-import FloatingBell from './FloatingBell.jsx';
+import FloatingBell from './FloatingBell.jsx'
 
-export default function Header({ title, onBellClick }) {
+export default function Header({ title, onBellClick, unreadCount = 0 }) {
   return (
     <header className="top-header">
       <h1 className="header-title">{title}</h1>
-      
-      <FloatingBell onClick={onBellClick} />
+      <FloatingBell onClick={onBellClick} unreadCount={unreadCount} />
     </header>
-  );
+  )
 }

@@ -96,12 +96,12 @@ function PatientSummaryCard({ patient, onSelectPatient, allPatients }) {
 }
 
 // ── Read-Only Mood Log Card (Provider View) ──────────────────────────────────
-function MoodLogCard({ todaysLog }) {
+function MoodLogCard({ todaysLog, onOpenHistory }) {
   return (
     <div className="card">
       <div className="card-header">
         <h3 className="card-title">Today's Log</h3>
-        <button className="history-link">History</button>
+        <button className="history-link" onClick={onOpenHistory}>History</button>
       </div>
 
       {/* IF PATIENT HAS NOT LOGGED YET TODAY */}
@@ -163,7 +163,7 @@ function MoodLogCard({ todaysLog }) {
 }
 
 // ── Cravings log card ─────────────────────────────────────────
-function CravingsLogCard({ cravingLevel, vapedToday }) {
+function CravingsLogCard({ cravingLevel, vapedToday, onOpenHistory }) {
   const [sliderValue, setSliderValue] = useState(cravingLevel)
 
   // Derive label from thresholds defined in mockData
@@ -174,7 +174,7 @@ function CravingsLogCard({ cravingLevel, vapedToday }) {
     <div className="card">
       <div className="card-header">
         <h3 className="card-title">Cravings Log</h3>
-        <button className="history-link">History</button>
+        <button className="history-link" onClick={onOpenHistory}>History</button>
       </div>
 
       <div className="cravings-subtitle">
@@ -277,7 +277,7 @@ function StreakChart({ streakData }) {
   )
 }
 
-export default function DashboardPage({ activePatientId, allPatients, onSelectPatient }) {
+export default function DashboardPage({ activePatientId, allPatients, onSelectPatient, onOpenHistory }) {
   const [dashboardData, setDashboardData] = useState(null)
   const [isLoading, setIsLoading]         = useState(true)
 
@@ -309,11 +309,12 @@ export default function DashboardPage({ activePatientId, allPatients, onSelectPa
             onSelectPatient={onSelectPatient}
           />
 
-          <MoodLogCard todaysLog={dashboardData.todaysLog} />
+          <MoodLogCard todaysLog={dashboardData.todaysLog} onOpenHistory={onOpenHistory} />
 
           <CravingsLogCard
             cravingLevel={dashboardData.insights.cravingLevel}
             vapedToday={dashboardData.todaysLog?.vapedToday ?? 'No'}
+            onOpenHistory={onOpenHistory}
           />
         </div>
 
