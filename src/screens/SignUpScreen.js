@@ -329,7 +329,7 @@ export default function SignUpScreen({ navigation }) {
                     { color: strength.checks[k] ? colors.success : colors.textMuted },
                   ]}
                 >
-                  {strength.checks[k] ? '✓' : '○'}  {l}
+                  {strength.checks[k] ? 'Met' : 'Needs'}  {l}
                 </Text>
               ))}
             </View>
@@ -359,7 +359,7 @@ export default function SignUpScreen({ navigation }) {
               styles.matchHint,
               { color: password === confirmPassword ? colors.success : colors.danger },
             ]}>
-              {password === confirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+              {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
             </Text>
           )}
           {errors.confirmPassword ? <Text style={styles.errMsg}>{errors.confirmPassword}</Text> : null}

@@ -293,7 +293,7 @@ export default function DetailsScreen({ navigation }) {
         )}
 
         <View style={{ height: spacing.lg }} />
-        <PrimaryButton title="Continue ✦" onPress={handleConfirm} loading={loading} />
+        <PrimaryButton title="Continue" onPress={handleConfirm} loading={loading} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

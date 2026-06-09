@@ -14,9 +14,22 @@ const uid = () => String(_nextId++);
 
 const AuthContext = createContext(null);
 
+const createEmptyMoodDraft = () => ({
+  mood: null,
+  triggers: [],
+  otherTrigger: '',
+  craving: 0,
+  vaped: null,
+  puffCount: 0,
+  vaperSessions: [],
+  currentSession: { timeSlotId: null, durationId: null },
+  comment: '',
+});
+
 export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [notifTick, setNotifTick] = useState(0);
+  const [moodDraft, setMoodDraft] = useState(createEmptyMoodDraft);
 
   const refresh = (user) => {
     setCurrentUser({ ...user });
@@ -88,7 +101,12 @@ export function AuthProvider({ children }) {
   };
 
   // ── LOG MOOD ENTRY ────────────────────────────────────────────────────────
-  const logMoodEntry = ({ mood, triggers, craving, vaped, vapeMinutes = 0, vapedHour = null, comment = '' }) => {
+  const logMoodEntry = ({
+    mood, triggers, craving, vaped,
+    vapeMinutes = 0, puffsToday = 0, vapedHour = null,
+    vapedSessions = [], totalVapingMinutes = null,
+    comment = '',
+  }) => {
     if (!currentUser) return { error: 'Not logged in' };
     const today = new Date().toISOString().split('T')[0];
     if (currentUser.moodLogs.find((l) => l.date === today)) return { alreadyLogged: true };
@@ -102,8 +120,9 @@ export function AuthProvider({ children }) {
 
     const entry = {
       id: uid(), date: today, mood, triggers, craving, vaped,
-      vapeMinutes: vaped ? vapeMinutes : 0,
-      puffsToday: 0,
+      vapeMinutes: vaped ? (totalVapingMinutes ?? vapeMinutes) : 0,
+      vapedSessions: vaped ? vapedSessions : [],
+      puffsToday: vaped ? puffsToday : 0,
       vapedHour:  vaped ? vapedHour  : null,
       comment,
       relapseRisk, points: pointsEarned,
@@ -121,13 +140,13 @@ export function AuthProvider({ children }) {
       if (relapseRisk > 60 || mood === 'Awful' || mood === 'Bad') {
         _pushNotification({
           toUsername: peerUsername, type: 'high_risk',
-          message: `⚠️ ${displayName} logged ${mood.toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.`,
+          message: `${displayName} logged ${mood.toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.`,
         });
       }
       if (vaped) {
         _pushNotification({
           toUsername: peerUsername, type: 'vaped',
-          message: `💔 ${displayName} reported vaping today. Consider reaching out.`,
+          message: `${displayName} reported vaping today. Consider reaching out.`,
         });
       }
     }
@@ -169,22 +188,22 @@ export function AuthProvider({ children }) {
   // Each reward has an id, condition function, and metadata.
   // Conditions receive the currentUser object after the log is saved.
   const REWARD_DEFS = [
-    { id: 'first_log',      icon: '🌿', name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',       condition: (u) => u.moodLogs.length >= 1 },
-    { id: 'streak_3',       icon: '🌙', name: '3-Day Streak',      pts: 50,   desc: 'Stayed vape-free for 3 days',        condition: (u) => u.streak >= 3 },
-    { id: 'streak_7',       icon: '⭐', name: 'One Week Clean',    pts: 100,  desc: '7 days smoke-free — incredible!',    condition: (u) => u.streak >= 7 },
-    { id: 'streak_14',      icon: '🔥', name: 'Two Weeks Strong',  pts: 200,  desc: '14 days and still going!',           condition: (u) => u.streak >= 14 },
-    { id: 'streak_30',      icon: '💎', name: 'One Month Free',    pts: 500,  desc: '30 days — you are a champion',       condition: (u) => u.streak >= 30 },
-    { id: 'streak_100',     icon: '🏆', name: '100 Days',          pts: 2000, desc: 'A legendary milestone',              condition: (u) => u.streak >= 100 },
-    { id: 'logs_7',         icon: '📓', name: 'Consistent Logger', pts: 80,   desc: 'Logged 7 days in a row',             condition: (u) => u.moodLogs.length >= 7 },
-    { id: 'logs_30',        icon: '📊', name: 'Data Driven',       pts: 300,  desc: 'Logged 30 total entries',            condition: (u) => u.moodLogs.length >= 30 },
-    { id: 'zero_puffs_3',  icon: '🚭', name: 'Puff-Free Trio',    pts: 75,   desc: '3 consecutive days with 0 puffs',    condition: (u) => {
+    { id: 'first_log',      icon: '01', name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',       condition: (u) => u.moodLogs.length >= 1 },
+    { id: 'streak_3',       icon: '03', name: '3-Day Streak',      pts: 50,   desc: 'Stayed vape-free for 3 days',        condition: (u) => u.streak >= 3 },
+    { id: 'streak_7',       icon: '07', name: 'One Week Clean',    pts: 100,  desc: '7 days smoke-free — incredible!',    condition: (u) => u.streak >= 7 },
+    { id: 'streak_14',      icon: '14', name: 'Two Weeks Strong',  pts: 200,  desc: '14 days and still going!',           condition: (u) => u.streak >= 14 },
+    { id: 'streak_30',      icon: '30', name: 'One Month Free',    pts: 500,  desc: '30 days — you are a champion',       condition: (u) => u.streak >= 30 },
+    { id: 'streak_100',     icon: '100', name: '100 Days',          pts: 2000, desc: 'A legendary milestone',              condition: (u) => u.streak >= 100 },
+    { id: 'logs_7',         icon: 'L7', name: 'Consistent Logger', pts: 80,   desc: 'Logged 7 days in a row',             condition: (u) => u.moodLogs.length >= 7 },
+    { id: 'logs_30',        icon: 'L30', name: 'Data Driven',       pts: 300,  desc: 'Logged 30 total entries',            condition: (u) => u.moodLogs.length >= 30 },
+    { id: 'zero_puffs_3',  icon: '0P', name: 'Puff-Free Trio',    pts: 75,   desc: '3 consecutive days with 0 puffs',    condition: (u) => {
         const sorted = [...u.moodLogs].sort((a,b)=>a.date.localeCompare(b.date));
         let streak = 0, best = 0;
         sorted.forEach(l => { if(!l.vaped){ streak++; best=Math.max(best,streak); } else { streak=0; } });
         return best >= 3;
     }},
-    { id: 'goal_set',       icon: '🎯', name: 'Goal Setter',       pts: 30,   desc: 'Set your first quit goal',           condition: (u) => !!u.goal },
-    { id: 'peer_connected', icon: '🤝', name: 'Not Alone',         pts: 50,   desc: 'Connected with a peer supporter',    condition: (u) => !!u.connectedPeerUsername },
+    { id: 'goal_set',       icon: 'G', name: 'Goal Setter',       pts: 30,   desc: 'Set your first quit goal',           condition: (u) => !!u.goal },
+    { id: 'peer_connected', icon: 'P', name: 'Not Alone',         pts: 50,   desc: 'Connected with a peer supporter',    condition: (u) => !!u.connectedPeerUsername },
   ];
 
   // Check all reward conditions and unlock newly earned ones
@@ -282,7 +301,7 @@ export function AuthProvider({ children }) {
         _pushNotification({
           toUsername: from.username,
           type: 'connection_accepted',
-          message: `✅ ${to.firstName || to.username} accepted your connection request! You are now their peer supporter.`,
+          message: `${to.firstName || to.username} accepted your connection request! You are now their peer supporter.`,
         });
       }
     } else {
@@ -362,6 +381,7 @@ export function AuthProvider({ children }) {
       });
     }
 
+    clearMoodDraft();
     refresh(currentUser);
     return { success: true };
   };
@@ -406,6 +426,7 @@ export function AuthProvider({ children }) {
 
     const idx = registeredUsers.findIndex((u) => u.username === username);
     if (idx !== -1) registeredUsers.splice(idx, 1);
+    clearMoodDraft();
     setCurrentUser(null);
     setNotifTick((n) => n + 1);
     return { success: true };
@@ -476,6 +497,14 @@ export function AuthProvider({ children }) {
   const getUnreadCount = () =>
     notifications.filter((n) => n.toUsername === currentUser?.username && !n.read).length;
 
+  const updateMoodDraft = (patch) => {
+    setMoodDraft((draft) => ({ ...draft, ...patch }));
+  };
+
+  const clearMoodDraft = () => {
+    setMoodDraft(createEmptyMoodDraft());
+  };
+
   // ── HELPERS ───────────────────────────────────────────────────────────────
   const getConnectedVapeUser = () => {
     if (!currentUser) return null;
@@ -496,16 +525,20 @@ export function AuthProvider({ children }) {
     );
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = () => {
+    clearMoodDraft();
+    setCurrentUser(null);
+  };
 
   return (
     <AuthContext.Provider value={{
-      currentUser, notifTick,
+      currentUser, notifTick, moodDraft,
       register, login, setRole, saveDetails,
       logMoodEntry, deleteLogEntry,
       sendConnectionRequest, respondToRequest, disconnect,
       sendMessage, getMessages,
       getNotifications, markAllRead, getUnreadCount,
+      updateMoodDraft, clearMoodDraft,
       getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
       setGoal, update2FA, resetProgress, deleteAccount,
       getRewardDefs, getUnlockedIds,

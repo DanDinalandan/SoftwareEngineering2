@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   StyleSheet, SafeAreaView, Modal, Platform,
@@ -192,7 +192,6 @@ function VapingDetailsSection({
       {/* Goal reminder */}
       {goal && (
         <View style={[vStyles.goalReminder, { borderColor: goal.color + '60' }]}>
-          <Text style={vStyles.goalReminderIcon}>🎯</Text>
           <View style={{ flex: 1 }}>
             <Text style={[vStyles.goalReminderTitle, { color: goal.color }]}>Quit plan: {goal.label}</Text>
             <Text style={vStyles.goalReminderText}>
@@ -277,7 +276,10 @@ const cravingBadge = (v) =>
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function MoodScreen({ navigation }) {
-  const { currentUser, logMoodEntry, getUnreadCount } = useAuth();
+  const {
+    currentUser, logMoodEntry, getUnreadCount,
+    moodDraft, updateMoodDraft, clearMoodDraft,
+  } = useAuth();
   const unreadCount   = getUnreadCount();
   const moodLogs      = currentUser?.moodLogs || [];
   const streak        = currentUser?.streak   || 0;
@@ -285,22 +287,43 @@ export default function MoodScreen({ navigation }) {
   const alreadyLogged = moodLogs.some((l) => l.date === todayStr);
 
   // Form state
-  const [mood,         setMood]        = useState(null);
-  const [triggers,     setTriggers]    = useState([]);
-  const [craving,      setCraving]     = useState(0);
-  const [vaped,        setVaped]       = useState(null);
-  const [vaperSessions,setVapeSessions]= useState([]);  // array of { timeSlotId, durationId }
-  const [comment,      setComment]     = useState('');
+  const [mood,         setMood]        = useState(moodDraft?.mood ?? null);
+  const [triggers,     setTriggers]    = useState(moodDraft?.triggers ?? []);
+  const [otherTrigger, setOtherTrigger] = useState(moodDraft?.otherTrigger ?? '');
+  const [craving,      setCraving]     = useState(moodDraft?.craving ?? 0);
+  const [vaped,        setVaped]       = useState(moodDraft?.vaped ?? null);
+  const [vaperSessions,setVapeSessions]= useState(moodDraft?.vaperSessions ?? []);  // array of { timeSlotId, durationId }
+  const [comment,      setComment]     = useState(moodDraft?.comment ?? '');
 
   // Modal state
   const [showModal,    setShowModal]   = useState(false);
   const [lastResult,   setLastResult]  = useState(null);
 
   const toggleTrigger = (t) =>
-    setTriggers((p) => p.includes(t) ? p.filter((x) => x !== t) : [...p, t]);
+    setTriggers((p) => {
+      const selected = p.includes(t);
+      if (selected && t === 'Other') setOtherTrigger('');
+      return selected ? p.filter((x) => x !== t) : [...p, t];
+    });
 
   // ── Vaping session helpers ──────────────────────────────────────────────────
-  const [currentSession, setCurrentSession] = useState({ timeSlotId: null, durationId: null });
+  const [currentSession, setCurrentSession] = useState(
+    moodDraft?.currentSession ?? { timeSlotId: null, durationId: null }
+  );
+
+  useEffect(() => {
+    if (alreadyLogged) return;
+    updateMoodDraft && updateMoodDraft({
+      mood,
+      triggers,
+      otherTrigger,
+      craving,
+      vaped,
+      vaperSessions,
+      currentSession,
+      comment,
+    });
+  }, [mood, triggers, otherTrigger, craving, vaped, vaperSessions, currentSession, comment, alreadyLogged]);
 
   const addSession = () => {
     if (!currentSession.timeSlotId || !currentSession.durationId) return;
@@ -326,8 +349,18 @@ export default function MoodScreen({ navigation }) {
       return sum + (dur?.minutes || 0);
     }, 0);
 
+    const customOtherTrigger = otherTrigger.trim();
+    if (triggers.includes('Other') && !customOtherTrigger) {
+      alert('Please type what the "Other" trigger is.');
+      return;
+    }
+
+    const loggedTriggers = triggers.map((t) => (
+      t === 'Other' ? `Other: ${customOtherTrigger}` : t
+    ));
+
     const result = logMoodEntry({
-      mood, triggers, craving, vaped,
+      mood, triggers: loggedTriggers, craving, vaped,
       puffsToday:    0,                  // deprecated — replaced by time-based
       vapedHour,                          // first session hour (for weekly peak analysis)
       vapedSessions: vaperSessions,       // full session records
@@ -343,7 +376,9 @@ export default function MoodScreen({ navigation }) {
   const closeAndGoHome = () => {
     setShowModal(false);
     setMood(null); setTriggers([]); setCraving(0); setVaped(null);
+    setOtherTrigger('');
     setVapeSessions([]); setCurrentSession({ timeSlotId: null, durationId: null }); setComment('');
+    clearMoodDraft && clearMoodDraft();
     navigation.navigate('VapeUserDashboard');
   };
 
@@ -399,6 +434,18 @@ export default function MoodScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </View>
+
+        {triggers.includes('Other') && (
+          <TextInput
+            style={styles.otherInput}
+            value={otherTrigger}
+            onChangeText={setOtherTrigger}
+            placeholder="Type your other trigger"
+            placeholderTextColor={colors.textMuted}
+            editable={!alreadyLogged}
+            maxLength={60}
+          />
+        )}
 
         {/* ── 3. Craving chart ── */}
         <Text style={styles.sectionLabel}>3. Craving history — last 7 days</Text>
@@ -541,7 +588,7 @@ export default function MoodScreen({ navigation }) {
                 )}
                 {lastResult?.relapseRisk > 60 && (
                   <Text style={styles.modalWarning}>
-                    ⚠️ Your relapse risk is elevated. Reach out to your support network.
+                    Your relapse risk is elevated. Reach out to your support network.
                   </Text>
                 )}
               </>
@@ -552,7 +599,7 @@ export default function MoodScreen({ navigation }) {
                 <Text style={styles.modalSub}>Honesty is the first step. Keep going!</Text>
                 {lastResult?.relapseRisk > 60 && (
                   <Text style={styles.modalWarning}>
-                    ⚠️ High risk detected. Check the Support section.
+                    High risk detected. Check the Support section.
                   </Text>
                 )}
               </>
@@ -610,6 +657,11 @@ const styles = StyleSheet.create({
   chipSel: { backgroundColor: colors.surface2, borderColor: colors.lavender },
   chipText: { fontSize: 12, fontWeight: '500', color: colors.textMuted },
   chipTextSel: { color: colors.text },
+  otherInput: {
+    backgroundColor: colors.input, borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.border, paddingHorizontal: 14, paddingVertical: 11,
+    color: colors.text, fontSize: 13, marginTop: -8, marginBottom: 18,
+  },
 
   // Chart
   chartWrap: { flexDirection: 'row', alignItems: 'flex-end', height: 70, marginBottom: 4, gap: 4 },

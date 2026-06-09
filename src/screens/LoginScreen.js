@@ -67,7 +67,7 @@ export default function LoginScreen({ navigation }) {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={{ flex: 1 }} />
-        <Text style={styles.star}>✦</Text>
+        <Text style={styles.star}>UNVAPEIFY</Text>
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Continue your journey</Text>
 
@@ -81,7 +81,7 @@ export default function LoginScreen({ navigation }) {
               onPress={() => setSelectedRole(r)}
               activeOpacity={0.8}
             >
-              <Text style={styles.roleEmoji}>{r === 'Vape User' ? '🌿' : '🤝'}</Text>
+              <Text style={styles.roleEmoji}>{r === 'Vape User' ? 'VU' : 'PS'}</Text>
               <Text style={[styles.roleBtnText, selectedRole === r && styles.roleBtnTextActive]}>
                 {r === 'Vape User' ? 'Vape User' : 'Peer Supporter'}
               </Text>

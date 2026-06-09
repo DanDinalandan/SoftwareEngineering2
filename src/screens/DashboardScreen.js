@@ -8,10 +8,8 @@ import { useAuth } from '../context/AuthContext';
 import { colors, spacing, radius } from '../theme';
 
 const icons = {
-  rewards: require('../../assets/icons/rewards.png'),
-  support: require('../../assets/icons/support.png'),
-  calendar: require('../../assets/icons/calendar.png'),
   weekly: require('../../assets/icons/report.png'),
+  goals: require('../../assets/icons/goal.png'),
  };
 
 // Relapse risk label + color based on score 0-100
@@ -92,8 +90,7 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
 
           <Card style={{ marginTop: 4, alignItems: 'center' }}>
-            <Text style={{ fontSize: 20, marginBottom: 6 }}>💜</Text>
-            <Text style={{ fontSize: 13, color: colors.bone, fontStyle: 'italic', textAlign: 'center' }}>
+            <Text style={{ fontSize: 13, color: colors.text, fontStyle: 'italic', textAlign: 'center' }}>
               "Being a peer supporter is one of the most powerful things you can do."
             </Text>
           </Card>
@@ -224,21 +221,13 @@ export default function DashboardScreen({ navigation }) {
 
         {/* Quick links row */}
         <View style={styles.quickRow}>
-          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Rewards')}>
-            <Image source={icons.rewards} style={styles.smallIcon} />
-            <Text style={styles.quickLabel}>Rewards</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Support')}>
-            <Image source={icons.support} style={styles.smallIcon} />
-            <Text style={styles.quickLabel}>Support</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Calendar')}>
-            <Image source={icons.calendar} style={styles.smallIcon} />
-            <Text style={styles.quickLabel}>Calendar</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('WeeklyReport')}>
             <Image source={icons.weekly} style={styles.smallIcon} />
-            <Text style={styles.quickLabel}>Weekly</Text>
+            <Text style={styles.quickLabel}>Weekly Report</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Goals')}>
+            <Image source={icons.goals} style={styles.smallIcon} />
+            <Text style={styles.quickLabel}>My Goals</Text>
           </TouchableOpacity>
         </View>
 
