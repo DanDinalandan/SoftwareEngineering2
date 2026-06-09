@@ -7,6 +7,13 @@ import { Card, BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
 import { colors, spacing, radius } from '../theme';
 
+const icons = {
+  rewards: require('../../assets/icons/rewards.png'),
+  support: require('../../assets/icons/support.png'),
+  calendar: require('../../assets/icons/calendar.png'),
+  weekly: require('../../assets/icons/report.png'),
+ };
+
 // Relapse risk label + color based on score 0-100
 function getRiskInfo(score) {
   if (score <= 30) return { label: 'Low', color: colors.success, pct: score };
@@ -25,8 +32,9 @@ export default function DashboardScreen({ navigation }) {
 
   const { firstName, role, streak = 0, totalPoints = 0, moodLogs = [], lastRelapseRisk = 0 } = currentUser;
   const initial = firstName ? firstName[0].toUpperCase() : '?';
+  console.log('Initial:', initial);
   const isPeer = role === 'Peer';
-
+  
   // Get top triggers from all logs
   const triggerCount = {};
   moodLogs.forEach((log) => {
@@ -39,10 +47,11 @@ export default function DashboardScreen({ navigation }) {
 
   const risk = getRiskInfo(lastRelapseRisk);
   const thumbPct = `${Math.min(95, Math.max(5, risk.pct))}%`;
-  const triggerIcons = {
+    const triggerIcons = {
   top: require('../../assets/icons/top-trigger.png'),
   second: require('../../assets/icons/second-trigger.png'),
 };
+
 
   // ── PEER DASHBOARD ──────────────────────────────────────────────────────
   if (isPeer) {
@@ -61,7 +70,6 @@ export default function DashboardScreen({ navigation }) {
 
           {/* Peer role card */}
           <View style={[styles.streakCard, { borderColor: 'rgba(181,125,218,0.5)' }]}>
-            <Text style={{ fontSize: 32, marginBottom: 8 }}></Text>
             <Text style={{ fontSize: 18, fontWeight: '800', color: colors.lavender, marginBottom: 4 }}>Peer Supporter</Text>
             <Text style={{ fontSize: 13, color: colors.textMuted, lineHeight: 20 }}>
               Thank you for being someone's support. Your presence matters more than you know.
@@ -71,23 +79,20 @@ export default function DashboardScreen({ navigation }) {
           {/* Peer tools */}
           <Text style={styles.statLabel}>PEER TOOLS</Text>
           <TouchableOpacity style={styles.peerCard} onPress={() => navigation.navigate('Support')}>
-            <Text style={{ fontSize: 24, marginBottom: 6 }}></Text>
             <Text style={styles.peerCardTitle}>Chat with Users</Text>
             <Text style={styles.peerCardSub}>Connect and support someone on their journey</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.peerCard} onPress={() => navigation.navigate('Support')}>
-            <Text style={{ fontSize: 24, marginBottom: 6 }}></Text>
             <Text style={styles.peerCardTitle}>Peer Resources</Text>
             <Text style={styles.peerCardSub}>Learn how to effectively support others</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.peerCard} onPress={() => navigation.navigate('Support')}>
-            <Text style={{ fontSize: 24, marginBottom: 6 }}></Text>
             <Text style={styles.peerCardTitle}>Community</Text>
-            <Text style={styles.peerCardSub}>Engage with the Unvapeify community</Text>
+            <Text style={styles.peerCardSub}>Engage with the unvapeify community</Text>
           </TouchableOpacity>
 
           <Card style={{ marginTop: 4, alignItems: 'center' }}>
-            <Text style={{ fontSize: 20, marginBottom: 6 }}></Text>
+            <Text style={{ fontSize: 20, marginBottom: 6 }}>💜</Text>
             <Text style={{ fontSize: 13, color: colors.bone, fontStyle: 'italic', textAlign: 'center' }}>
               "Being a peer supporter is one of the most powerful things you can do."
             </Text>
@@ -104,7 +109,9 @@ export default function DashboardScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         <View style={styles.headerRow}>
-          <View>
+          {/* Streak pill — top left */}
+
+          <View style={{ flex: 1, paddingLeft: 10 }}>
             <Text style={styles.greetSub}>Are you feeling good today,</Text>
             <Text style={styles.greetName}>{firstName}?</Text>
           </View>
@@ -197,8 +204,7 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.triggerRow}>
             {topTriggers.map((t, i) => (
               <View key={t} style={styles.triggerCard}>
-                <Image source={i === 0 ? triggerIcons.top : triggerIcons.second}
-                style={styles.triggerIcon} />
+                <Image source={i === 0 ? triggerIcons.top : triggerIcons.second} style={styles.triggerIcon} />
                 <Text style={styles.triggerName}>{t}</Text>
                 <View style={i === 0 ? styles.badgeHigh : styles.badgeMod}>
                   <Text style={{ color: i === 0 ? colors.danger : colors.warning, fontSize: 11, fontWeight: '600' }}>
@@ -208,11 +214,33 @@ export default function DashboardScreen({ navigation }) {
               </View>
             ))}
           </View>
+
+         
         )}
 
         <TouchableOpacity style={styles.logBtn} onPress={() => navigation.navigate('Mood')}>
           <Text style={styles.logBtnText}>Log Today's Entry</Text>
         </TouchableOpacity>
+
+        {/* Quick links row */}
+        <View style={styles.quickRow}>
+          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Rewards')}>
+            <Image source={icons.rewards} style={styles.smallIcon} />
+            <Text style={styles.quickLabel}>Rewards</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Support')}>
+            <Image source={icons.support} style={styles.smallIcon} />
+            <Text style={styles.quickLabel}>Support</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('Calendar')}>
+            <Image source={icons.calendar} style={styles.smallIcon} />
+            <Text style={styles.quickLabel}>Calendar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickCard} onPress={() => navigation.navigate('WeeklyReport')}>
+            <Image source={icons.weekly} style={styles.smallIcon} />
+            <Text style={styles.quickLabel}>Weekly</Text>
+          </TouchableOpacity>
+        </View>
 
       </ScrollView>
       <BottomNav active="Dashboard" navigation={navigation} unreadCount={unreadCount} />
@@ -223,10 +251,25 @@ export default function DashboardScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   content: { paddingHorizontal: spacing.lg, paddingBottom: 100 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing.lg },
+  headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing.lg },
   greetSub: { fontSize: 13, color: colors.textMuted },
-  greetName: { fontSize: 22, fontWeight: '800', color: colors.text },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.border },
+  greetName: { fontSize: 20, fontWeight: '800', color: colors.text },
+  // Streak pill — top left
+  smallIcon: {
+  width: 24,
+  height: 24,
+  resizeMode: 'contain',
+},
+  streakPill: {
+    flexDirection: 'column', alignItems: 'center',
+    backgroundColor: 'rgba(181,125,218,0.18)', borderRadius: radius.md,
+    borderWidth: 1.5, borderColor: colors.lavender + '60',
+    paddingVertical: 6, paddingHorizontal: 10, minWidth: 52,
+  },
+  streakPillFire: { fontSize: 16 },
+  streakPillNum: { fontSize: 18, fontWeight: '800', color: colors.lavender, lineHeight: 22 },
+  streakPillLabel: { fontSize: 9, color: colors.textMuted, fontWeight: '600' },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center', },
   avatarText: { color: colors.porcelain, fontWeight: '800', fontSize: 16 },
   streakCard: { backgroundColor: colors.cardSolid, borderWidth: 1, borderColor: 'rgba(181,125,218,0.35)', borderRadius: radius.xl, padding: 22, marginBottom: 14 },
   streakRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -253,7 +296,12 @@ const styles = StyleSheet.create({
   badgeNeutral: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(170,160,187,0.15)', borderWidth: 1, borderColor: 'rgba(170,160,187,0.3)' },
   triggerRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   triggerCard: { flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 14 },
-  triggerIcon: { width: 32, height: 32, resizeMode: 'contain', marginBottom: 6, },
+ triggerIcon: {
+  width: 24,
+  height: 24,
+  resizeMode: 'contain',
+  marginBottom: 6,
+},
   triggerName: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 6 },
   badgeHigh: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(224,112,112,0.15)' },
   badgeMod: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(240,192,112,0.15)' },
@@ -261,6 +309,13 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic' },
   logBtn: { backgroundColor: colors.frenchBlue, paddingVertical: 15, borderRadius: radius.md, alignItems: 'center', shadowColor: colors.lavender, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
   logBtnText: { color: colors.porcelain, fontSize: 15, fontWeight: '700' },
+  quickRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  quickCard: {
+    flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+    borderRadius: radius.md, padding: 12, alignItems: 'center', gap: 6,
+  },
+  quickIcon: { fontSize: 20 },
+  quickLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600' },
   peerCard: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: 16, marginBottom: 12 },
   peerCardTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 4 },
   peerCardSub: { fontSize: 13, color: colors.textMuted },

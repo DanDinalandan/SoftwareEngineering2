@@ -200,7 +200,7 @@ export default function SignUpScreen({ navigation }) {
           </View>
           {errors.gmailUser
             ? <Text style={styles.errMsg}>{errors.gmailUser}</Text>
-            : <Text style={styles.fieldHint}>Type your Gmail username — we'll add @gmail.com</Text>
+            : <Text style={styles.fieldHint}>Type your Gmail username</Text>
           }
         </View>
 
@@ -225,7 +225,7 @@ export default function SignUpScreen({ navigation }) {
           </View>
           {errors.username
             ? <Text style={styles.errMsg}>{errors.username}</Text>
-            : <Text style={styles.fieldHint}>Letters, numbers, underscores only · max 20 chars</Text>
+            : null
           }
 
           {/* Suggestions — show when gmail username has been typed */}
@@ -281,7 +281,7 @@ export default function SignUpScreen({ navigation }) {
               style={styles.inputText}
               value={password}
               onChangeText={handlePasswordChange}
-              placeholder="At least 8 chars with upper, lower, number, symbol"
+              placeholder="Input a strong password"
               placeholderTextColor={colors.textMuted}
               secureTextEntry
               returnKeyType="next"

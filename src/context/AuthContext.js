@@ -88,7 +88,7 @@ export function AuthProvider({ children }) {
   };
 
   // ── LOG MOOD ENTRY ────────────────────────────────────────────────────────
-  const logMoodEntry = ({ mood, triggers, craving, vaped, puffsToday = 0, vapedHour = null, comment = '' }) => {
+  const logMoodEntry = ({ mood, triggers, craving, vaped, vapeMinutes = 0, vapedHour = null, comment = '' }) => {
     if (!currentUser) return { error: 'Not logged in' };
     const today = new Date().toISOString().split('T')[0];
     if (currentUser.moodLogs.find((l) => l.date === today)) return { alreadyLogged: true };
@@ -102,7 +102,8 @@ export function AuthProvider({ children }) {
 
     const entry = {
       id: uid(), date: today, mood, triggers, craving, vaped,
-      puffsToday: vaped ? puffsToday : 0,
+      vapeMinutes: vaped ? vapeMinutes : 0,
+      puffsToday: 0,
       vapedHour:  vaped ? vapedHour  : null,
       comment,
       relapseRisk, points: pointsEarned,
@@ -132,8 +133,24 @@ export function AuthProvider({ children }) {
     }
 
     const newlyUnlocked = _checkAndUnlockRewards(currentUser);
+
+    _pushNotification({
+      toUsername: currentUser.username,
+      type: 'daily_log',
+      message: vaped
+        ? `Today's log was saved. Your relapse risk is ${relapseRisk}%, and your peer alerts are up to date.`
+        : `Great work logging today. You earned ${pointsEarned} points and reached a ${newStreak} day streak.`,
+    });
+    newlyUnlocked.forEach((reward) => {
+      _pushNotification({
+        toUsername: currentUser.username,
+        type: 'reward',
+        message: `Reward unlocked: ${reward.name}. You earned ${reward.pts} bonus points.`,
+      });
+    });
+
     refresh(currentUser);
-    return { success: true, pointsEarned, newStreak, relapseRisk, entryId: entry.id, newlyUnlocked };
+    return { success: true, pointsEarned, newStreak, relapseRisk, vaped, entryId: entry.id, newlyUnlocked };
   };
 
   // ── DELETE LOG ENTRY ──────────────────────────────────────────────────────
@@ -287,15 +304,111 @@ export function AuthProvider({ children }) {
   const setGoal = (goal) => {
     if (!currentUser) return;
     currentUser.goal = goal;
+    _pushNotification({
+      toUsername: currentUser.username,
+      type: 'goal',
+      message: `Goal updated: ${goal.label}. We'll use notifications to help you stay accountable.`,
+    });
     refresh(currentUser);
   };
 
   // ── 2FA ──────────────────────────────────────────────────────────────────
   const update2FA = (enabled, phone) => {
     if (!currentUser) return;
-    currentUser.twoFAEnabled = enabled;
-    if (phone) currentUser.phone = phone;
+    const previous2FA = currentUser.twoFAEnabled;
+    if (typeof enabled === 'boolean') currentUser.twoFAEnabled = enabled;
+    if (phone !== undefined) currentUser.phone = phone;
+    if (typeof enabled === 'boolean' && previous2FA !== currentUser.twoFAEnabled) {
+      _pushNotification({
+        toUsername: currentUser.username,
+        type: 'security',
+        message: currentUser.twoFAEnabled
+          ? 'Two-factor authentication is now active on your account.'
+          : 'Two-factor authentication was turned off for your account.',
+      });
+    } else if (phone !== undefined) {
+      _pushNotification({
+        toUsername: currentUser.username,
+        type: 'security',
+        message: 'Your account recovery phone number was updated.',
+      });
+    }
     refresh(currentUser);
+  };
+
+  const resetProgress = () => {
+    if (!currentUser) return { success: false };
+    const peerUsername = currentUser.connectedPeerUsername;
+    const displayName = currentUser.firstName || currentUser.username;
+
+    currentUser.streak = 0;
+    currentUser.totalPoints = 0;
+    currentUser.moodLogs = [];
+    currentUser.lastRelapseRisk = 0;
+    currentUser.goal = null;
+    currentUser.unlockedRewards = [];
+
+    _pushNotification({
+      toUsername: currentUser.username,
+      type: 'progress_reset',
+      message: 'Your progress has been reset. You can start logging again whenever you are ready.',
+    });
+
+    if (peerUsername && currentUser.progressSharedWithPeer) {
+      _pushNotification({
+        toUsername: peerUsername,
+        type: 'progress_reset',
+        message: `${displayName} reset their recovery progress. Check in if they need support starting fresh.`,
+      });
+    }
+
+    refresh(currentUser);
+    return { success: true };
+  };
+
+  const deleteAccount = () => {
+    if (!currentUser) return { success: false };
+    const username = currentUser.username;
+    const partnerUsername = currentUser.connectedPeerUsername || currentUser.connectedVapeUserUsername;
+    const displayName = currentUser.firstName || currentUser.username;
+
+    if (partnerUsername) {
+      const partner = registeredUsers.find((u) => u.username === partnerUsername);
+      if (partner) {
+        partner.connectedPeerUsername = null;
+        partner.connectedVapeUserUsername = null;
+        partner.peerRelationship = null;
+        partner.progressSharedWithPeer = false;
+        partner.vapeUserRelationshipLabel = null;
+        _pushNotification({
+          toUsername: partner.username,
+          type: 'account_deleted',
+          message: `${displayName} deleted their account, so the peer connection was removed.`,
+        });
+      }
+    }
+
+    for (let i = connectionRequests.length - 1; i >= 0; i--) {
+      if (connectionRequests[i].fromUsername === username || connectionRequests[i].toUsername === username) {
+        connectionRequests.splice(i, 1);
+      }
+    }
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].fromUsername === username || messages[i].toUsername === username) {
+        messages.splice(i, 1);
+      }
+    }
+    for (let i = notifications.length - 1; i >= 0; i--) {
+      if (notifications[i].toUsername === username || notifications[i].fromUsername === username) {
+        notifications.splice(i, 1);
+      }
+    }
+
+    const idx = registeredUsers.findIndex((u) => u.username === username);
+    if (idx !== -1) registeredUsers.splice(idx, 1);
+    setCurrentUser(null);
+    setNotifTick((n) => n + 1);
+    return { success: true };
   };
 
   const disconnect = () => {
@@ -394,7 +507,7 @@ export function AuthProvider({ children }) {
       sendMessage, getMessages,
       getNotifications, markAllRead, getUnreadCount,
       getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
-      setGoal, update2FA,
+      setGoal, update2FA, resetProgress, deleteAccount,
       getRewardDefs, getUnlockedIds,
       checkAndUnlockRewards: _checkAndUnlockRewards,
       logout,

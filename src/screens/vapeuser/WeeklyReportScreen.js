@@ -28,7 +28,7 @@ function getWeeklyData(moodLogs) {
   return week;
 }
 
-function generateRecommendations({ avgCraving, totalPuffs, vapedDays, topTrigger, avgRisk, totalDays }) {
+function generateRecommendations({ avgCraving, totalVapeMinutes, vapedDays, topTrigger, avgRisk, totalDays }) {
   const recs = [];
 
   if (vapedDays === 0) {
@@ -49,10 +49,10 @@ function generateRecommendations({ avgCraving, totalPuffs, vapedDays, topTrigger
     recs.push({ text: `Your most common trigger this week was "${topTrigger}". Prepare a specific response plan for when this trigger appears.` });
   }
 
-  if (totalPuffs > 0 && totalPuffs <= 20) {
-    recs.push({ text: `Only ${totalPuffs} puffs this week — great reduction. Try cutting another 20% next week.` });
-  } else if (totalPuffs > 50) {
-    recs.push({ text: `${totalPuffs} puffs logged this week. Focus on reducing the first puff of each day — delaying it by 30 minutes compounds quickly.` });
+  if (totalVapeMinutes > 0 && totalVapeMinutes <= 30) {
+    recs.push({ text: `Only ${totalVapeMinutes} minutes of vaping logged this week. Try cutting another 20% next week.` });
+  } else if (totalVapeMinutes > 90) {
+    recs.push({ text: `${totalVapeMinutes} minutes of vaping were logged this week. Focus on delaying the first vape of each day by 30 minutes.` });
   }
 
   if (avgRisk > 60) {
@@ -73,7 +73,7 @@ export default function WeeklyReportScreen({ navigation }) {
   const weekLogs = useMemo(() => getWeeklyData(moodLogs), [moodLogs]);
   const logged   = weekLogs.filter(Boolean);
 
-  const totalPuffs  = logged.reduce((s, l) => s + (l.puffsToday || 0), 0);
+  const totalVapeMinutes = logged.reduce((s, l) => s + (l.vapeMinutes || l.puffsToday || 0), 0);
   const vapedDays   = logged.filter((l) => l.vaped).length;
   const vapeFree    = logged.filter((l) => !l.vaped).length;
   const avgCraving  = logged.length > 0
@@ -96,7 +96,7 @@ export default function WeeklyReportScreen({ navigation }) {
   });
   const peakHour = Object.entries(hourCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const recs = generateRecommendations({ avgCraving: parseFloat(avgCraving), totalPuffs, vapedDays, topTrigger, avgRisk, totalDays: logged.length });
+  const recs = generateRecommendations({ avgCraving: parseFloat(avgCraving), totalVapeMinutes, vapedDays, topTrigger, avgRisk, totalDays: logged.length });
 
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const maxCraving = Math.max(...weekLogs.map((l) => l?.craving || 0), 1);
@@ -122,16 +122,16 @@ export default function WeeklyReportScreen({ navigation }) {
             <Text style={styles.gridLabel}>Days Vaped</Text>
           </View>
           <View style={styles.gridCard}>
-            <Text style={[styles.gridNum, { color: colors.warning }]}>{totalPuffs}</Text>
-            <Text style={styles.gridLabel}>Total Puffs</Text>
+            <Text style={[styles.gridNum, { color: colors.warning }]}>{totalVapeMinutes}</Text>
+            <Text style={styles.gridLabel}>Vape Minutes</Text>
           </View>
           <View style={styles.gridCard}>
             <Text style={[styles.gridNum, { color: getRiskColor(avgRisk) }]}>{avgRisk}%</Text>
-            <Text style={styles.gridLabel}>Avg Risk</Text>
+            <Text style={styles.gridLabel}>Average Risk</Text>
           </View>
           <View style={styles.gridCard}>
             <Text style={styles.gridNum}>{avgCraving}</Text>
-            <Text style={styles.gridLabel}>Avg Craving</Text>
+            <Text style={styles.gridLabel}>Average Craving</Text>
           </View>
           <View style={styles.gridCard}>
             <Text style={styles.gridNum}>{logged.length}/7</Text>
