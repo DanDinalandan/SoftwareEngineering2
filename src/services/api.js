@@ -121,4 +121,9 @@ export const api = {
     await delay(150)
     return { success: true, id: messageId }
   },
+
+  sendMessageReply: async (messageId, replyText) => {
+    await delay(500)
+    return { success: true, id: messageId }
+  }
 }
