@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { patients } from '../data/mockData.js'
 
 const NAV_ITEMS = [
   {
@@ -33,7 +32,7 @@ const NAV_ITEMS = [
 // Status colour mapping for the patient list dots
 const STATUS_COLOR = { stable: 'var(--green)', monitor: 'var(--amber)', alert: 'var(--red)' }
 
-function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient }) {
+function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patients = [], nurse = null }) {
   // Controls whether the patient quick-access list is expanded
   const [patientsOpen, setPatientsOpen] = useState(true)
 
@@ -59,8 +58,8 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         </div>
-        <div style={{ color: 'var(--text-light)', fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name Surname</div>
-        <div style={{ color: 'var(--bg-canvas)', fontSize: 11, marginTop: 2 }}>nurse@email.com</div>
+        <div style={{ color: 'var(--text-light)', fontSize: 16, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{nurse?.name || 'Provider'}</div>
+        <div style={{ color: 'var(--bg-canvas)', fontSize: 11, marginTop: 2 }}>{nurse?.email || ''}</div>
       </div>
 
       {/* ── Main nav items ── */}
@@ -148,6 +147,9 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient }) {
                 </button>
               )
             })}
+            {patients.length === 0 && (
+              <div style={{ color: 'var(--bg-canvas)', fontSize: 11, padding: '8px 10px' }}>No patients loaded</div>
+            )}
           </div>
         )}
       </div>

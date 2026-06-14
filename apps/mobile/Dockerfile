@@ -11,4 +11,4 @@ COPY apps/mobile/assets ./assets
 
 EXPOSE 8081 19000 19001 19002
 
-CMD ["npx", "expo", "start", "--host", "lan"]
+CMD ["npx", "expo", "start", "--lan", "--clear"]

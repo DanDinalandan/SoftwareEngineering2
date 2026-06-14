@@ -47,7 +47,7 @@ export default function LoginScreen({ navigation }) {
       const result = await login({ identifier: identifier.trim(), password, role: selectedRole });
       if (!result.success) { setErrors({ general: result.error }); return; }
       const user = result.user;
-      if (user.role !== selectedRole) {
+      if (user.role && user.role !== selectedRole) {
         setErrors({ general: `This account is registered as "${user.role}", not "${selectedRole}".` });
         return;
       }
@@ -58,6 +58,8 @@ export default function LoginScreen({ navigation }) {
       } else {
         navigation.navigate('Selection');
       }
+    } catch (err) {
+      setErrors({ general: err.message || 'An error occurred' });
     } finally {
       setLoading(false);
     }
@@ -67,7 +69,7 @@ export default function LoginScreen({ navigation }) {
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={{ flex: 1 }} />
-        <Text style={styles.star}>✦</Text>
+        <Text style={styles.star}>UNVAPEIFY</Text>
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Continue your journey</Text>
 
@@ -81,7 +83,7 @@ export default function LoginScreen({ navigation }) {
               onPress={() => setSelectedRole(r)}
               activeOpacity={0.8}
             >
-              <Text style={styles.roleEmoji}>{r === 'Vape User' ? '🌿' : '🤝'}</Text>
+              <Text style={styles.roleEmoji}>{r === 'Vape User' ? 'VU' : 'PS'}</Text>
               <Text style={[styles.roleBtnText, selectedRole === r && styles.roleBtnTextActive]}>
                 {r === 'Vape User' ? 'Vape User' : 'Peer Supporter'}
               </Text>

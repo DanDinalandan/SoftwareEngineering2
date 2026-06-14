@@ -7,19 +7,19 @@ export const colors = {
   frenchBlue: '#41478B',
 
   // Backgrounds
-  bg: '#3D2660',
-  surface: 'rgba(65,71,139,0.22)',
+  bg: '#E8E2D4',
+  surface: 'rgba(255,255,246,0.62)',
   surface2: 'rgba(181,125,218,0.18)',
-  card: 'rgba(255,255,246,0.09)',
-  cardSolid: 'rgba(75,50,120,0.55)',
+  card: 'rgba(255,255,246,0.72)',
+  cardSolid: 'rgba(255,255,246,0.90)',
 
   // UI
-  border: 'rgba(181,125,218,0.30)',
-  input: 'rgba(80,55,130,0.45)',
+  border: 'rgba(65,71,139,0.20)',
+  input: 'rgba(255,255,246,0.82)',
 
-  text: '#FFFFF6',
-  textMuted: '#C4B8D8',
-  textDim: 'rgba(232,226,212,0.65)',
+  text: '#41478B',
+  textMuted: '#6F6685',
+  textDim: 'rgba(65,71,139,0.62)',
 
   // Status
   success: '#7EC8A0',
@@ -27,7 +27,7 @@ export const colors = {
   danger: '#E07070',
 
   // Nav
-  navBg: 'rgba(35,18,65,0.97)',
+  navBg: 'rgba(255,255,246,0.96)',
 
   easy: '#7EC8A0',
   medium: '#F0C070',
@@ -47,20 +47,20 @@ export const typography = {
     fontFamily: 'System',
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFF6',
+    color: '#41478B',
   },
   subheading: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFF6',
+    color: '#41478B',
   },
   body: {
     fontSize: 14,
-    color: '#FFFFF6',
+    color: '#41478B',
   },
   muted: {
     fontSize: 13,
-    color: '#AAA0BB',
+    color: '#6F6685',
   },
   label: {
     fontSize: 11,

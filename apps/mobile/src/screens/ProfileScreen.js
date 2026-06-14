@@ -17,7 +17,6 @@ const icons = {
   report: require('../../assets/icons/report.png'),
 };
 
-// Progress color based on streak or score
 function getStreakColor(streak) {
   if (streak >= 30) return colors.progressExcellent;
   if (streak >= 14) return colors.progressGood;
@@ -56,7 +55,6 @@ export default function ProfileScreen({ navigation }) {
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
   const initials = [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?';
 
-  // Stats calculations
   const vapeFreeCount = moodLogs.filter((l) => !l.vaped).length;
   const vapedCount    = moodLogs.filter((l) => l.vaped).length;
   const totalLogged   = moodLogs.length;
@@ -73,6 +71,17 @@ export default function ProfileScreen({ navigation }) {
   const streakColor  = getStreakColor(streak);
   const riskColor    = getRiskColor(lastRelapseRisk);
   const riskLabel    = getRiskLabel(lastRelapseRisk);
+  const progressLabel = vapeFreeRate >= 80 ? 'Strong overall progress'
+    : vapeFreeRate >= 60 ? 'Good overall progress'
+    : vapeFreeRate >= 40 ? 'Mixed overall progress'
+    : totalLogged > 0 ? 'Early progress'
+    : 'No check-ins yet';
+  const progressSummary = totalLogged > 0
+    ? `${vapeFreeCount} of ${totalLogged} check-ins were vape-free.`
+    : 'Start logging to build your progress history.';
+  const riskSummary = lastRelapseRisk > 0
+    ? 'Based on your latest check-in.'
+    : 'Log today to see your current risk.';
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -98,7 +107,7 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.pageTitle}>Profile</Text>
         </View>
 
-        {/* Avatar + name — prominent */}
+        {/* Avatar + name */}
         <View style={styles.heroCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
@@ -110,8 +119,18 @@ export default function ProfileScreen({ navigation }) {
           </View>
           <View style={styles.heroDetails}>
             {gender ? <Text style={styles.heroDetail}>{gender}</Text> : null}
-            {birthday ? <View style={styles.heroDetailRow}> <Image source={icons.birthday} style={styles.smallIcon} /> <Text style={styles.heroDetail}>{birthday}</Text> </View> : null}
-            {phone ? <View style={styles.heroDetailRow}> <Image source={icons.phone} style={styles.smallIcon} /> <Text style={styles.heroDetail}>{phone}</Text> </View> : null}
+            {birthday ? (
+              <View style={styles.heroDetailRow}>
+                <Image source={icons.birthday} style={styles.smallIcon} />
+                <Text style={styles.heroDetail}>{birthday}</Text>
+              </View>
+            ) : null}
+            {phone ? (
+              <View style={styles.heroDetailRow}>
+                <Image source={icons.phone} style={styles.smallIcon} />
+                <Text style={styles.heroDetail}>{phone}</Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -121,59 +140,67 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.goalCardLabel}>Active Goal</Text>
             <Text style={[styles.goalCardName, { color: goal.color }]}>{goal.label}</Text>
             <Text style={styles.goalCardLimit}>
-              {goal.dailyPuffLimit === 0
-                ? 'Zero puffs per day'
-                : `${goal.dailyPuffLimit} puffs/day`}
+              {goal.dailyPuffLimit === 0 ? 'Zero puffs per day' : `${goal.dailyPuffLimit} puffs/day`}
             </Text>
           </View>
         )}
 
-        {/* Stats summary with progress colors */}
-        <Text style={styles.sectionLabel}>Statistics Summary</Text>
+        {/* Progress snapshot */}
+        <Text style={styles.sectionLabel}>Progress Snapshot</Text>
+        <Text style={styles.sectionIntro}>
+          Your all-time recovery progress from every check-in. For this week's patterns and advice, open Weekly Report.
+        </Text>
 
         {/* Streak + risk row */}
         <View style={styles.statRow}>
           <View style={[styles.statCard, { borderColor: streakColor + '60' }]}>
             <Text style={[styles.statBigNum, { color: streakColor }]}>{streak}</Text>
-            <Text style={styles.statBigLabel}>Day Streak</Text>
+            <Text style={styles.statBigLabel}>Current Streak</Text>
             <View style={[styles.statusBadge, { backgroundColor: streakColor + '20' }]}>
               <Text style={[styles.statusBadgeText, { color: streakColor }]}>
                 {streak >= 30 ? 'Excellent' : streak >= 14 ? 'Great' : streak >= 7 ? 'Good' : streak >= 1 ? 'Building' : 'Start now'}
               </Text>
             </View>
+            <Text style={styles.statHelp}>Consecutive vape-free days.</Text>
           </View>
           <View style={[styles.statCard, { borderColor: riskColor + '60' }]}>
             <Text style={[styles.statBigNum, { color: riskColor }]}>
               {lastRelapseRisk > 0 ? `${lastRelapseRisk}%` : '—'}
             </Text>
-            <Text style={styles.statBigLabel}>Relapse Risk</Text>
+            <Text style={styles.statBigLabel}>Current Risk</Text>
             {lastRelapseRisk > 0 && (
               <View style={[styles.statusBadge, { backgroundColor: riskColor + '20' }]}>
                 <Text style={[styles.statusBadgeText, { color: riskColor }]}>{riskLabel}</Text>
               </View>
             )}
+            <Text style={styles.statHelp}>{riskSummary}</Text>
           </View>
+        </View>
+
+        <View style={styles.progressCard}>
+          <Text style={styles.progressTitle}>{progressLabel}</Text>
+          <Text style={styles.progressText}>{progressSummary}</Text>
         </View>
 
         {/* Detailed stats grid */}
         <View style={styles.statsGrid}>
           <View style={styles.miniStat}>
             <Text style={styles.miniNum}>{totalPoints}</Text>
-            <Text style={styles.miniLabel}>Total Points</Text>
+            <Text style={styles.miniLabel}>Points Earned</Text>
           </View>
           <View style={styles.miniStat}>
             <Text style={[styles.miniNum, { color: colors.progressExcellent }]}>{vapeFreeCount}</Text>
-            <Text style={styles.miniLabel}>Vape-Free Days</Text>
+            <Text style={styles.miniLabel}>Clean Days</Text>
           </View>
           <View style={styles.miniStat}>
             <Text style={[styles.miniNum, { color: vapedCount > 0 ? colors.progressCritical : colors.text }]}>
               {vapedCount}
             </Text>
-            <Text style={styles.miniLabel}>Days Vaped</Text>
+            <Text style={styles.miniLabel}>Vape Days</Text>
           </View>
           <View style={styles.miniStat}>
             <Text style={styles.miniNum}>{totalLogged}</Text>
-            <Text style={styles.miniLabel}>Total Entries</Text>
+            <Text style={styles.miniLabel}>Check-ins</Text>
           </View>
           <View style={styles.miniStat}>
             <Text style={[
@@ -187,11 +214,11 @@ export default function ProfileScreen({ navigation }) {
             ]}>
               {vapeFreeRate > 0 ? `${vapeFreeRate}%` : '—'}
             </Text>
-            <Text style={styles.miniLabel}>Vape-Free Rate</Text>
+            <Text style={styles.miniLabel}>Clean-Day Rate</Text>
           </View>
           <View style={styles.miniStat}>
             <Text style={styles.miniNum}>{avgCraving}</Text>
-            <Text style={styles.miniLabel}>Average Craving</Text>
+            <Text style={styles.miniLabel}>Usual Craving</Text>
           </View>
         </View>
 
@@ -199,7 +226,7 @@ export default function ProfileScreen({ navigation }) {
         {totalLogged > 0 && (
           <View style={styles.rateBarCard}>
             <View style={styles.rateBarHeader}>
-              <Text style={styles.rateBarLabel}>Vape-Free Success Rate</Text>
+              <Text style={styles.rateBarLabel}>Overall Clean-Day Rate</Text>
               <Text style={[
                 styles.rateBarPct,
                 { color: vapeFreeRate >= 60 ? colors.progressGood : colors.progressCritical },
@@ -216,39 +243,45 @@ export default function ProfileScreen({ navigation }) {
                   : colors.progressCritical,
               }]} />
             </View>
+            <Text style={styles.rateBarNote}>
+              This compares every vape-free check-in with every check-in you have saved.
+            </Text>
             <Text style={styles.topMoodText}>
-              Most common mood: <Text style={{ color: colors.lavender, fontWeight: '700' }}>{topMood}</Text>
+              Mood you log most: <Text style={{ color: colors.lavender, fontWeight: '700' }}>{topMood}</Text>
             </Text>
           </View>
         )}
 
         {/* Menu items */}
-  <Text style={styles.sectionLabel}>Account</Text>
+        <Text style={styles.sectionLabel}>Account</Text>
 
-<View style={styles.menuCard}>
-  <TouchableOpacity
-    style={styles.menuItem}
-    onPress={() => navigation.navigate('WeeklyReport')}
-  >
-    <Image source={icons.report} style={styles.menuIconImg} />
-    <Text style={styles.menuText}>Weekly Report</Text>
-    <Text style={[styles.menuMeta, { color: colors.lavender }]}>
-    <Text>View insights</Text>
-      </Text>
-        <Text style={styles.menuArrow}>{'›'}</Text>
-        </TouchableOpacity>
-       <View style={styles.menuDivider} />
+        <View style={styles.menuCard}>
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => navigation.navigate('Goals')} >
+            onPress={() => navigation.navigate('WeeklyReport')}
+          >
+            <Image source={icons.report} style={styles.menuIconImg} />
+            <Text style={styles.menuText}>Weekly Report</Text>
+            <Text style={[styles.menuMeta, { color: colors.lavender }]}>View insights</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigation.navigate('Goals')}
+          >
             <Image source={icons.goal} style={styles.menuIconImg} />
             <Text style={styles.menuText}>My Goal</Text>
             {goal && (
               <Text style={[styles.menuMeta, { color: goal.color }]}>{goal.label}</Text>
             )}
-            <Text style={styles.menuArrow}>{'›'}</Text>
+            <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+
           <View style={styles.menuDivider} />
+
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => navigation.navigate('Security')}
@@ -260,7 +293,9 @@ export default function ProfileScreen({ navigation }) {
             )}
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+
           <View style={styles.menuDivider} />
+
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => Alert.alert('Settings', 'Coming soon!')}
@@ -269,7 +304,9 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.menuText}>Settings</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
+
           <View style={styles.menuDivider} />
+
           <TouchableOpacity
             style={styles.menuItem}
             onPress={() => Alert.alert('About', 'Coming soon!')}
@@ -354,6 +391,9 @@ menuIconImg: {
     fontSize: 11, fontWeight: '700', letterSpacing: 0.8, color: colors.textMuted,
     textTransform: 'uppercase', marginBottom: 10, marginTop: 8,
   },
+  sectionIntro: {
+    fontSize: 12, color: colors.textMuted, lineHeight: 18, marginTop: -4, marginBottom: 12,
+  },
   statRow: { flexDirection: 'row', gap: 10, marginBottom: 10 },
   statCard: {
     flex: 1, backgroundColor: colors.card, borderRadius: radius.lg,
@@ -363,6 +403,14 @@ menuIconImg: {
   statBigLabel: { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 8 },
   statusBadge: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20 },
   statusBadgeText: { fontSize: 11, fontWeight: '700' },
+  statHelp: { fontSize: 10, color: colors.textMuted, lineHeight: 14, marginTop: 8, textAlign: 'center' },
+
+  progressCard: {
+    backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.border, padding: 14, marginBottom: 10,
+  },
+  progressTitle: { fontSize: 14, color: colors.text, fontWeight: '800', marginBottom: 4 },
+  progressText: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 
   statsGrid: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 10,
@@ -373,6 +421,7 @@ menuIconImg: {
   },
   miniNum: { fontSize: 18, fontWeight: '800', color: colors.text },
   miniLabel: { fontSize: 10, color: colors.textMuted, marginTop: 3, textAlign: 'center', lineHeight: 14 },
+  miniHelp: { fontSize: 9, color: colors.lilacAsh, marginTop: 2, textAlign: 'center', lineHeight: 12 },
 
   rateBarCard: {
     backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1,
@@ -383,6 +432,7 @@ menuIconImg: {
   rateBarPct: { fontSize: 14, fontWeight: '800' },
   rateBarTrack: { height: 8, backgroundColor: 'rgba(170,160,187,0.2)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
   rateBarFill: { height: '100%', borderRadius: 4 },
+  rateBarNote: { fontSize: 11, color: colors.textMuted, lineHeight: 16, marginBottom: 8 },
   topMoodText: { fontSize: 12, color: colors.textMuted },
 
   menuCard: {

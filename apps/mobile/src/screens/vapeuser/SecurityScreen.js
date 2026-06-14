@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
-  StyleSheet, SafeAreaView, Modal, Switch,
+  StyleSheet, SafeAreaView, Modal, Switch, Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, radius } from '../../theme';
 
 export default function SecurityScreen({ navigation }) {
-  const { currentUser, update2FA } = useAuth();
+  const { currentUser, update2FA, resetProgress, deleteAccount } = useAuth();
 
   const [twoFAEnabled, setTwoFAEnabled] = useState(currentUser?.twoFAEnabled || false);
   const [phone, setPhone] = useState(currentUser?.phone || '');
@@ -66,7 +66,47 @@ export default function SecurityScreen({ navigation }) {
     setPhone(cleaned);
     setPhoneError('');
     setEditingPhone(false);
-    // TODO: update2FA({ phone: cleaned }) in real API
+    update2FA && update2FA(twoFAEnabled, cleaned);
+  };
+
+  const handleResetProgress = () => {
+    Alert.alert(
+      'Reset progress?',
+      'This clears your streak, points, mood logs, rewards, and active goal. Your account and peer connection will stay active.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            const result = resetProgress && resetProgress();
+            if (result?.success) {
+              Alert.alert('Progress reset', 'Your recovery progress has been cleared.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      'This permanently removes this account, progress, messages, notifications, and peer connection from this demo store.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            const result = deleteAccount && deleteAccount();
+            if (result?.success) {
+              navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -82,7 +122,7 @@ export default function SecurityScreen({ navigation }) {
 
         {/* Phone number section */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>📱 Phone Number</Text>
+          <Text style={styles.sectionTitle}>Phone Number</Text>
           <Text style={styles.sectionDesc}>
             Used for two-factor authentication and account recovery.
           </Text>
@@ -151,6 +191,29 @@ export default function SecurityScreen({ navigation }) {
               ⚠️ Add a phone number above to enable 2FA.
             </Text>
           )}
+        </View>
+
+        <View style={[styles.sectionCard, styles.dangerCard]}>
+          <Text style={styles.dangerTitle}>Account controls</Text>
+          <Text style={styles.sectionDesc}>
+            Reset your recovery data for a fresh start, or delete the account entirely.
+          </Text>
+
+          <TouchableOpacity style={styles.resetBtn} onPress={handleResetProgress}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.controlTitle}>Reset progress</Text>
+              <Text style={styles.controlDesc}>Clear logs, streak, points, rewards, and goal.</Text>
+            </View>
+            <Text style={styles.resetBtnText}>Reset</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.controlTitle}>Delete account</Text>
+              <Text style={styles.controlDesc}>Remove this account and disconnect supporters.</Text>
+            </View>
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -257,6 +320,22 @@ const styles = StyleSheet.create({
   enabledText: { fontSize: 13, color: colors.success, fontWeight: '600', textAlign: 'center' },
   warningText: { fontSize: 12, color: colors.warning, marginTop: 10 },
   errorText: { fontSize: 12, color: colors.danger, marginBottom: 8 },
+  dangerCard: { borderColor: 'rgba(224,112,112,0.45)', backgroundColor: 'rgba(224,112,112,0.08)' },
+  dangerTitle: { fontSize: 15, fontWeight: '800', color: colors.danger, marginBottom: 4 },
+  resetBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: colors.cardSolid, borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.border, padding: 12, marginBottom: 10,
+  },
+  deleteBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(224,112,112,0.12)', borderRadius: radius.md, borderWidth: 1,
+    borderColor: 'rgba(224,112,112,0.45)', padding: 12,
+  },
+  controlTitle: { fontSize: 14, color: colors.text, fontWeight: '700', marginBottom: 2 },
+  controlDesc: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+  resetBtnText: { fontSize: 13, color: colors.warning, fontWeight: '800' },
+  deleteBtnText: { fontSize: 13, color: colors.danger, fontWeight: '800' },
   infoBox: {
     backgroundColor: 'rgba(181,125,218,0.1)', borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.border, padding: 16,

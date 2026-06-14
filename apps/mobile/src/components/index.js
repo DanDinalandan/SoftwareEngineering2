@@ -101,7 +101,7 @@ export function InputField({
         />
         {isPassword && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-            <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁'}</Text>
+            <Text style={styles.eyeText}>{showPassword ? 'Hide' : 'Show'}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -119,7 +119,7 @@ export function Card({ children, style }) {
 export function LogoBox({ size = 110 }) {
   return (
     <View style={[styles.logoBox, { width: size, height: size, borderRadius: radius.md }]}>
-      <Text style={styles.logoStar}>✦</Text>
+      <Text style={styles.logoStar}>UN</Text>
     </View>
   );
 }
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   secondaryBtnText: {
-    color: colors.bone,
+    color: colors.text,
     fontSize: 15,
     fontWeight: '500',
   },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  selEmoji: { fontSize: 32, marginBottom: 6 },
+  selEmoji: { display: 'none' },
   selectionBtnText: {
     color: colors.text,
     fontSize: 17,

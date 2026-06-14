@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { notifications } from '../data/mockData.js'
 
 const FILTERS = ['All', 'Alerts', 'Updates', 'Milestones']
 
@@ -12,7 +11,7 @@ const FILTER_FNS = {
 }
 
 // ─── Component ───────────────────────────────────────────────
-function NotificationsPanel({ isOpen, onClose }) {
+function NotificationsPanel({ isOpen, onClose, notifications = [] }) {
   const [activeFilter, setActiveFilter] = useState('All')
   const visible = notifications.filter(FILTER_FNS[activeFilter])
 

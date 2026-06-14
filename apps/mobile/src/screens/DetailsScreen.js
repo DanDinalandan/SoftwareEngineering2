@@ -135,7 +135,7 @@ export default function DetailsScreen({ navigation }) {
     if (!validate()) return;
     setLoading(true);
     try {
-      await saveDetails({
+      const result = await saveDetails({
         firstName: sanitizeName(form.firstName.trim()),
         lastName:  sanitizeName(form.lastName.trim()),
         middleName: sanitizeName(form.middleName.trim()),
@@ -145,7 +145,9 @@ export default function DetailsScreen({ navigation }) {
         gender: form.gender,
         vapeTypes: selectedVapeTypes,
       });
-      navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      if (result?.success) {
+        navigation.reset({ index: 0, routes: [{ name: 'Dashboard' }] });
+      }
     } finally {
       setLoading(false);
     }
@@ -293,7 +295,7 @@ export default function DetailsScreen({ navigation }) {
         )}
 
         <View style={{ height: spacing.lg }} />
-        <PrimaryButton title="Continue ✦" onPress={handleConfirm} loading={loading} />
+        <PrimaryButton title="Continue" onPress={handleConfirm} loading={loading} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

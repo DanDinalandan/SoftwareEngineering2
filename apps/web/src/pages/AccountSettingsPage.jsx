@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { activityLog, prefToggles } from '../data/mockData.js'
+import { prefToggles } from '../data/displayOptions.js'
 
 // ── Toggle switch component ───────────────────────────────────
 function Toggle({ defaultOn }) {
@@ -20,7 +20,6 @@ function ProfileCard({ nurse }) {
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="settings-title">Profile</div>
 
-      {/* Avatar placeholder */}
       <div className="profile-avatar-big">
         <svg width="50" height="50" fill="none" stroke="var(--border-accent)" strokeWidth="2" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -28,13 +27,11 @@ function ProfileCard({ nurse }) {
       </div>
       <button className="change-photo-btn">Change Photo</button>
 
-      {/* Text fields */}
       <div className="field-group">
         <div className="field-label">Full name</div>
         <input className="field-input" type="text" defaultValue={nurse?.name ?? ''} />
       </div>
 
-      {/* Two fields side by side */}
       <div className="field-row">
         <div className="field-group">
           <div className="field-label">License No.</div>
@@ -42,7 +39,7 @@ function ProfileCard({ nurse }) {
         </div>
         <div className="field-group">
           <div className="field-label">Department</div>
-          <input className="field-input" type="text" defaultValue="Cessation Clinic" />
+          <input className="field-input" type="text" defaultValue={nurse?.department ?? ''} />
         </div>
       </div>
 
@@ -114,13 +111,11 @@ function ActivityCard() {
   return (
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="settings-title">Recent Activity</div>
-      {activityLog.map(({ icon, text, time }) => (
-        <div key={text} className="act-row">
-          <div className="act-icon">{icon}</div>
-          <div className="act-text">{text}</div>
-          <div className="act-time">{time}</div>
-        </div>
-      ))}
+      <div className="act-row">
+        <div className="act-icon">📋</div>
+        <div className="act-text">Recent provider activity will appear after audit logging is enabled.</div>
+        <div className="act-time">Live</div>
+      </div>
     </div>
   )
 }
@@ -155,14 +150,10 @@ function AccountSettingsPage({ onLogout, nurse }) {
   return (
     <div>
       <div className="settings-grid">
-
-        {/* Left column */}
         <div>
           <ProfileCard nurse={nurse} />
           <SecurityCard />
         </div>
-
-        {/* Right column */}
         <div>
           <NotifPrefsCard />
           <ActivityCard />

@@ -4,19 +4,21 @@ This runs the backend, web app, and Expo mobile app from one command.
 
 ## 1. Create environment file
 
-Copy:
-
 ```bash
 cp .env.docker.example .env.docker
 ```
 
-Fill in your Supabase values:
+Fill in your Supabase values and LAN IP:
 
 ```env
 SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE_KEY=...
 JWT_SECRET=...
+LAN_IP=192.168.1.20
+EXPO_PUBLIC_API_BASE_URL=http://192.168.1.20:3000
 ```
+
+Use your computer's Wi-Fi/LAN IPv4 address for `LAN_IP`. Do not use `localhost` for Expo Go on a physical phone.
 
 ## 2. Run everything
 
@@ -30,30 +32,28 @@ Services:
 - Web portal: `http://localhost:5173`
 - Expo mobile dev server: `http://localhost:8081`
 
-## Mobile note
+## Expo Go LAN Mode
 
-If you use Expo Go on a physical phone, `localhost` points to the phone, not your computer.
+The mobile container starts Expo with:
 
-Set this in `.env.docker`:
-
-```env
-EXPO_PUBLIC_API_BASE_URL=http://YOUR_COMPUTER_LAN_IP:3000
+```bash
+npx expo start --lan --clear
 ```
 
-Example:
-
-```env
-EXPO_PUBLIC_API_BASE_URL=http://192.168.1.20:3000
-```
-
-Then restart Docker Compose.
+Your phone and computer must be on the same network. If Windows Firewall prompts, allow inbound access to ports `3000`, `8081`, `19000`, `19001`, and `19002`.
 
 ## Database
 
-This Docker setup uses your hosted Supabase project. Run this SQL once in Supabase SQL Editor:
+Run the schema once in the Supabase SQL Editor:
 
 ```text
 apps/backend/supabase/schema.sql
+```
+
+To load development demo data, run:
+
+```text
+apps/backend/supabase/seed.sql
 ```
 
 ## Useful commands

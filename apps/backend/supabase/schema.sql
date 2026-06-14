@@ -84,20 +84,40 @@ create table if not exists public.messages (
   id uuid primary key default gen_random_uuid(),
   from_user_id uuid not null references public.app_users(id) on delete cascade,
   to_user_id uuid not null references public.app_users(id) on delete cascade,
+  subject text,
   text text not null,
+  read_by_provider boolean not null default false,
   display_timestamp text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.messages add column if not exists subject text;
+alter table public.messages add column if not exists read_by_provider boolean not null default false;
 
 create table if not exists public.notifications (
   id uuid primary key default gen_random_uuid(),
   to_user_id uuid not null references public.app_users(id) on delete cascade,
   from_user_id uuid references public.app_users(id) on delete set null,
   type text not null,
+  title text,
+  icon text,
   message text not null,
   request_id uuid references public.connection_requests(id) on delete set null,
   from_display_name text,
   read boolean not null default false,
+  display_timestamp text not null default '',
+  created_at timestamptz not null default now()
+);
+
+alter table public.notifications add column if not exists title text;
+alter table public.notifications add column if not exists icon text;
+
+create table if not exists public.provider_messages (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.providers(id) on delete cascade,
+  to_user_id uuid not null references public.app_users(id) on delete cascade,
+  original_message_id uuid references public.messages(id) on delete set null,
+  text text not null,
   display_timestamp text not null default '',
   created_at timestamptz not null default now()
 );
@@ -116,6 +136,7 @@ create index if not exists mood_logs_user_date_idx on public.mood_logs (user_id,
 create index if not exists messages_conversation_idx on public.messages (from_user_id, to_user_id, created_at);
 create index if not exists notifications_user_created_idx on public.notifications (to_user_id, created_at desc);
 create index if not exists otp_codes_user_created_idx on public.otp_codes (user_id, created_at desc);
+create index if not exists provider_messages_provider_created_idx on public.provider_messages (provider_id, created_at desc);
 
 alter table public.app_users enable row level security;
 alter table public.providers enable row level security;
@@ -124,3 +145,4 @@ alter table public.connection_requests enable row level security;
 alter table public.messages enable row level security;
 alter table public.notifications enable row level security;
 alter table public.otp_codes enable row level security;
+alter table public.provider_messages enable row level security;

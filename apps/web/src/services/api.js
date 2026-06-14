@@ -1,30 +1,25 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-const TOKEN_KEY = 'unvapeify_provider_token'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
 
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY)
-}
+let providerToken = localStorage.getItem('providerToken') || null;
 
-function setToken(token) {
-  if (token) localStorage.setItem(TOKEN_KEY, token)
+function setProviderToken(token) {
+  providerToken = token || null;
+  if (providerToken) localStorage.setItem('providerToken', providerToken);
+  else localStorage.removeItem('providerToken');
 }
 
 async function request(path, options = {}) {
-  const token = getToken()
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(providerToken ? { Authorization: `Bearer ${providerToken}` } : {}),
       ...(options.headers || {}),
     },
-  })
-
-  const data = await response.json().catch(() => ({}))
-  if (!response.ok) {
-    throw new Error(data.error || `Request failed with status ${response.status}`)
-  }
-  return data
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Request failed with status ${response.status}`);
+  return data;
 }
 
 export const api = {
@@ -32,44 +27,72 @@ export const api = {
     const data = await request('/provider/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    })
-    setToken(data.token)
-    return data.provider
+    });
+    setProviderToken(data.token);
+    return data.provider;
   },
 
   registerProvider: async (payload) => {
     const data = await request('/provider/register', {
       method: 'POST',
       body: JSON.stringify(payload),
-    })
-    setToken(data.token)
-    return data.provider
+    });
+    setProviderToken(data.token);
+    return data.provider;
   },
 
-  logoutProvider: () => {
-    localStorage.removeItem(TOKEN_KEY)
-  },
+  logoutProvider: () => setProviderToken(null),
 
   getNurseProfile: async () => {
-    const data = await request('/provider/me')
-    return data.provider
+    const data = await request('/provider/me');
+    return data.provider;
   },
 
   getPatients: async () => {
-    const data = await request('/provider/patients')
-    return data.patients
+    const data = await request('/provider/patients');
+    return data.patients;
   },
 
   getPatientDashboard: async (patientId) => {
-    return request(`/provider/patients/${patientId}/dashboard`)
+    return request(`/provider/patients/${patientId}/dashboard`);
   },
 
   getPatientProfile: async (patientId) => {
-    return request(`/provider/patients/${patientId}/profile`)
+    return request(`/provider/patients/${patientId}/profile`);
   },
 
   getMessages: async () => {
-    const data = await request('/provider/messages')
-    return data.messages
+    const data = await request('/provider/messages');
+    return data.messages;
   },
-}
+
+  getNotifications: async () => {
+    const data = await request('/provider/notifications');
+    return data.notifications;
+  },
+
+  markNotificationRead: async (notificationId) => {
+    return request(`/provider/notifications/${notificationId}/read`, { method: 'PATCH' });
+  },
+
+  markAllNotificationsRead: async () => {
+    return request('/provider/notifications/read-all', { method: 'PATCH' });
+  },
+
+  getPatientLogHistory: async (patientId) => {
+    const data = await request(`/provider/patients/${patientId}/logs`);
+    return data.logs;
+  },
+
+  markMessageRead: async (messageId) => {
+    return request(`/provider/messages/${messageId}/read`, { method: 'PATCH' });
+  },
+
+  sendMessageReply: async (messageId, replyText) => {
+    return request(`/provider/messages/${messageId}/reply`, {
+      method: 'POST',
+      body: JSON.stringify({ text: replyText }),
+    });
+  },
+};
+

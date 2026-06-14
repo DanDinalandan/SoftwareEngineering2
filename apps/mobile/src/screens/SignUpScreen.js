@@ -158,9 +158,11 @@ export default function SignUpScreen({ navigation }) {
     setLoading(true);
     try {
       const fullEmail = `${gmailUser.trim()}@gmail.com`;
-      const result = await register({ email: fullEmail, username, phone, password });
+      const result = await register({ email: fullEmail, username, phone, password, role: '' });
       if (!result.success) { setErrors({ general: result.error }); return; }
       navigation.navigate('Selection');
+    } catch (err) {
+      setErrors({ general: err.message || 'An error occurred' });
     } finally {
       setLoading(false);
     }
@@ -200,7 +202,7 @@ export default function SignUpScreen({ navigation }) {
           </View>
           {errors.gmailUser
             ? <Text style={styles.errMsg}>{errors.gmailUser}</Text>
-            : <Text style={styles.fieldHint}>Type your Gmail username — we'll add @gmail.com</Text>
+            : <Text style={styles.fieldHint}>Type your Gmail username</Text>
           }
         </View>
 
@@ -225,7 +227,7 @@ export default function SignUpScreen({ navigation }) {
           </View>
           {errors.username
             ? <Text style={styles.errMsg}>{errors.username}</Text>
-            : <Text style={styles.fieldHint}>Letters, numbers, underscores only · max 20 chars</Text>
+            : null
           }
 
           {/* Suggestions — show when gmail username has been typed */}
@@ -281,7 +283,7 @@ export default function SignUpScreen({ navigation }) {
               style={styles.inputText}
               value={password}
               onChangeText={handlePasswordChange}
-              placeholder="At least 8 chars with upper, lower, number, symbol"
+              placeholder="Input a strong password"
               placeholderTextColor={colors.textMuted}
               secureTextEntry
               returnKeyType="next"
@@ -329,7 +331,7 @@ export default function SignUpScreen({ navigation }) {
                     { color: strength.checks[k] ? colors.success : colors.textMuted },
                   ]}
                 >
-                  {strength.checks[k] ? '✓' : '○'}  {l}
+                  {strength.checks[k] ? 'Met' : 'Needs'}  {l}
                 </Text>
               ))}
             </View>
@@ -359,7 +361,7 @@ export default function SignUpScreen({ navigation }) {
               styles.matchHint,
               { color: password === confirmPassword ? colors.success : colors.danger },
             ]}>
-              {password === confirmPassword ? '✓ Passwords match' : '✕ Passwords do not match'}
+              {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
             </Text>
           )}
           {errors.confirmPassword ? <Text style={styles.errMsg}>{errors.confirmPassword}</Text> : null}

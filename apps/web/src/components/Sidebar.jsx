@@ -19,7 +19,6 @@ const NAV_ITEMS = [
   {
     key: 'messages',
     label: 'Messages',
-    badge: '2',
     svgPath: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   },
   {
@@ -31,7 +30,7 @@ const NAV_ITEMS = [
 
 const STATUS_COLOR = { stable: 'var(--green)', monitor: 'var(--amber)', alert: 'var(--red)' }
 
-function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patientsList = [], nurse }) {
+function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, patientsList = [], nurse, unreadCount = 0, unreadMsgCount = 0 }) {
   const [patientsOpen, setPatientsOpen] = useState(true)
 
   return (
@@ -88,9 +87,10 @@ function Sidebar({ activePage, onNavigate, activePatientId, onSelectPatient, pat
                 </svg>
                 <span>{item.label}</span>
               </div>
-              {item.badge && (
+              {/* Show live unread badge on the notifications bell nav item */}
+              {item.key === 'messages' && unreadMsgCount > 0 && (
                 <span style={{ background: '#ec3c3c', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 6 }}>
-                  {item.badge}
+                  {unreadMsgCount > 99 ? '99+' : unreadMsgCount}
                 </span>
               )}
             </button>
