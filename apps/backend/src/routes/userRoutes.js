@@ -9,6 +9,28 @@ import { calculateAge } from '../utils/userFields.js';
 
 export const userRoutes = Router();
 
+// ── GET /user/me ───────────────────────────────────────────────────────────
+userRoutes.get('/user/me', authRequired, asyncHandler(async (req, res) => {
+  const { data: userData, error: userError } = await supabase
+    .from('app_users')
+    .select('*')
+    .eq('id', req.user.id)
+    .single();
+  if (userError || !userData) return res.status(404).json({ error: 'User not found.' });
+
+  const { data: moodLogs, error: logsError } = await supabase
+    .from('mood_logs')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('log_date', { ascending: false });
+  if (logsError) throw logsError;
+
+  const user = toUser(userData);
+  user.moodLogs = (moodLogs || []).map(toMoodLog);
+
+  res.json({ user });
+}));
+
 userRoutes.patch('/user/profile', authRequired, asyncHandler(async (req, res) => {
   const age = req.body.birthday ? calculateAge(req.body.birthday) : req.body.age;
   if (age !== null && age !== undefined && age !== '') {
@@ -55,12 +77,26 @@ userRoutes.patch('/user/phone', authRequired, asyncHandler(async (req, res) => {
 }));
 
 userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
+  // Use the timezone sent from the user's phone so log_date matches
+  // their local date — not the server's UTC date.
+  const tz = req.body.timezone || 'UTC';
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz }); // → 'YYYY-MM-DD'
   const triggers = Array.isArray(req.body.triggers) ? req.body.triggers : [];
   const vaped = Boolean(req.body.vaped);
   const relapseRisk = calculateRelapseRisk({ mood: req.body.mood, craving: req.body.craving, triggers });
   const pointsEarned = 10 + (!vaped ? 15 : 0);
-  const newStreak = !vaped ? req.user.streak + 1 : 0;
+
+  // FIX: Always fetch fresh user data from DB before computing new values.
+  const { data: freshUser, error: freshError } = await supabase
+    .from('app_users')
+    .select('streak, total_points')
+    .eq('id', req.user.id)
+    .single();
+  if (freshError || !freshUser) return res.status(500).json({ error: 'Could not fetch user data.' });
+
+  const currentStreak = Number(freshUser.streak) || 0;
+  const currentPoints = Number(freshUser.total_points) || 0;
+  const newStreak = !vaped ? currentStreak + 1 : 0;
 
   const { data: entry, error } = await supabase
     .from('mood_logs')
@@ -76,7 +112,7 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
       comment: req.body.comment || '',
       relapse_risk: relapseRisk,
       points: pointsEarned,
-      display_timestamp: new Date().toLocaleString(),
+      display_timestamp: new Date().toLocaleString([], { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }),
     })
     .select('*')
     .single();
@@ -85,7 +121,7 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
 
   const { data: updatedUser, error: updateError } = await supabase
     .from('app_users')
-    .update({ streak: newStreak, total_points: req.user.totalPoints + pointsEarned, last_relapse_risk: relapseRisk, updated_at: new Date().toISOString() })
+    .update({ streak: newStreak, total_points: currentPoints + pointsEarned, last_relapse_risk: relapseRisk, updated_at: new Date().toISOString() })
     .eq('id', req.user.id)
     .select('*')
     .single();
@@ -125,4 +161,3 @@ userRoutes.delete('/mood/:id', authRequired, asyncHandler(async (req, res) => {
   if (updateError) throw updateError;
   res.json({ message: 'Log deleted', pointsReversed, newStreak: updatedUser.streak });
 }));
-

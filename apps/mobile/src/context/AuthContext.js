@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiRequest, setAuthToken, clearAuthToken } from '../services/api';
 
 /**
@@ -7,7 +7,6 @@ import { apiRequest, setAuthToken, clearAuthToken } from '../services/api';
  */
 const connectionRequests = [];
 const messages = [];
-const notifications = [];
 
 const AuthContext = createContext(null);
 
@@ -27,11 +26,18 @@ export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [notifTick, setNotifTick] = useState(0);
   const [moodDraft, setMoodDraft] = useState(createEmptyMoodDraft);
+  const [notifications, setNotifications] = useState([]);
 
   const refresh = (user) => {
     setCurrentUser({ ...user });
     setNotifTick((n) => n + 1);
   };
+
+  // Fetch notifications whenever the logged-in user changes
+  useEffect(() => {
+    if (currentUser) fetchNotifications();
+    else setNotifications([]);
+  }, [currentUser?.id]);
 
   // ── REGISTER ─────────────────────────────────────────────────────────────
   const register = async ({ email, username, password, phone = '', role = '' }) => {
@@ -49,7 +55,6 @@ export function AuthProvider({ children }) {
   };
 
   // ── LOGIN ─────────────────────────────────────────────────────────────────
-  // FIX: Login goes straight to Dashboard if profileComplete — no re-asking for details
   const login = async ({ identifier, password, role = '' }) => {
     try {
       const data = await apiRequest('/auth/login', {
@@ -94,6 +99,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // ── REFRESH USER DATA ─────────────────────────────────────────────────────
+  // Calls /user/me to re-fetch the latest user data from the backend,
+  // which updates streak, moodLogs, totalPoints, lastRelapseRisk, etc.
+  const refreshUser = async () => {
+    if (!currentUser) return;
+    try {
+      const [userData] = await Promise.all([
+        apiRequest('/user/me', { method: 'GET' }),
+        fetchNotifications(),
+      ]);
+      setCurrentUser(userData.user);
+    } catch (err) {
+      console.error('Error refreshing user:', err);
+    }
+  };
+
   // ── LOG MOOD ENTRY ────────────────────────────────────────────────────────
   const logMoodEntry = async ({
     mood, triggers, craving, vaped,
@@ -112,15 +133,13 @@ export function AuthProvider({ children }) {
           puffsToday: vaped ? puffsToday : 0,
           vapedHour: vaped ? vapedHour : null,
           comment,
+          // Send the phone's local timezone to the backend so log_date
+          // is recorded in the user's local time, not UTC.
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
-      setCurrentUser((user) => ({
-        ...user,
-        streak: data.newStreak,
-        totalPoints: (user?.totalPoints || 0) + (data.pointsEarned || 0),
-        lastRelapseRisk: data.relapseRisk,
-        moodLogs: [data.entry, ...(user?.moodLogs || [])],
-      }));
+      // FIX: Re-fetch real data from DB instead of ghost local state update
+      await refreshUser();
       return { success: true, ...data };
     } catch (err) {
       return { success: false, error: err.message };
@@ -132,7 +151,8 @@ export function AuthProvider({ children }) {
     if (!currentUser) return;
     try {
       await apiRequest(`/mood/${entryId}`, { method: 'DELETE' });
-      refresh(currentUser);
+      // FIX: Re-fetch real data from DB after delete instead of ghost local state
+      await refreshUser();
     } catch (err) {
       console.error('Error deleting log:', err);
     }
@@ -140,16 +160,16 @@ export function AuthProvider({ children }) {
 
   // ── REWARD SYSTEM ─────────────────────────────────────────────────────────
   const REWARD_DEFS = [
-    { id: 'first_log',      icon: '01', name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',       condition: (u) => u.moodLogs?.length >= 1 },
-    { id: 'streak_3',       icon: '03', name: '3-Day Streak',      pts: 50,   desc: 'Stayed vape-free for 3 days',        condition: (u) => u.streak >= 3 },
-    { id: 'streak_7',       icon: '07', name: 'One Week Clean',    pts: 100,  desc: '7 days smoke-free — incredible!',    condition: (u) => u.streak >= 7 },
-    { id: 'streak_14',      icon: '14', name: 'Two Weeks Strong',  pts: 200,  desc: '14 days and still going!',           condition: (u) => u.streak >= 14 },
-    { id: 'streak_30',      icon: '30', name: 'One Month Free',    pts: 500,  desc: '30 days — you are a champion',       condition: (u) => u.streak >= 30 },
-    { id: 'streak_100',     icon: '100', name: '100 Days',          pts: 2000, desc: 'A legendary milestone',              condition: (u) => u.streak >= 100 },
-    { id: 'logs_7',         icon: 'L7', name: 'Consistent Logger', pts: 80,   desc: 'Logged 7 days in a row',             condition: (u) => u.moodLogs?.length >= 7 },
-    { id: 'logs_30',        icon: 'L30', name: 'Data Driven',       pts: 300,  desc: 'Logged 30 total entries',            condition: (u) => u.moodLogs?.length >= 30 },
-    { id: 'goal_set',       icon: 'G', name: 'Goal Setter',       pts: 30,   desc: 'Set your first quit goal',           condition: (u) => !!u.goal },
-    { id: 'peer_connected', icon: 'P', name: 'Not Alone',         pts: 50,   desc: 'Connected with a peer supporter',    condition: (u) => !!u.connectedPeerUsername },
+    { id: 'first_log',      icon: '01',  name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',      condition: (u) => u.moodLogs?.length >= 1 },
+    { id: 'streak_3',       icon: '03',  name: '3-Day Streak',     pts: 50,   desc: 'Stayed vape-free for 3 days',       condition: (u) => u.streak >= 3 },
+    { id: 'streak_7',       icon: '07',  name: 'One Week Clean',   pts: 100,  desc: '7 days smoke-free — incredible!',   condition: (u) => u.streak >= 7 },
+    { id: 'streak_14',      icon: '14',  name: 'Two Weeks Strong', pts: 200,  desc: '14 days and still going!',          condition: (u) => u.streak >= 14 },
+    { id: 'streak_30',      icon: '30',  name: 'One Month Free',   pts: 500,  desc: '30 days — you are a champion',      condition: (u) => u.streak >= 30 },
+    { id: 'streak_100',     icon: '100', name: '100 Days',         pts: 2000, desc: 'A legendary milestone',             condition: (u) => u.streak >= 100 },
+    { id: 'logs_7',         icon: 'L7',  name: 'Consistent Logger',pts: 80,   desc: 'Logged 7 days in a row',            condition: (u) => u.moodLogs?.length >= 7 },
+    { id: 'logs_30',        icon: 'L30', name: 'Data Driven',      pts: 300,  desc: 'Logged 30 total entries',           condition: (u) => u.moodLogs?.length >= 30 },
+    { id: 'goal_set',       icon: 'G',   name: 'Goal Setter',      pts: 30,   desc: 'Set your first quit goal',          condition: (u) => !!u.goal },
+    { id: 'peer_connected', icon: 'P',   name: 'Not Alone',        pts: 50,   desc: 'Connected with a peer supporter',   condition: (u) => !!u.connectedPeerUsername },
   ];
 
   const getRewardDefs = () => REWARD_DEFS;
@@ -216,15 +236,28 @@ export function AuthProvider({ children }) {
   };
 
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
-  const getNotifications = () => notifications || [];
+  const fetchNotifications = async () => {
+    if (!currentUser) return;
+    try {
+      const data = await apiRequest('/notifications', { method: 'GET' });
+      setNotifications(data.notifications || []);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
+  const getNotifications = () => notifications;
+
   const markAllRead = async () => {
     try {
       await apiRequest('/notifications/read-all', { method: 'PATCH' });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setNotifTick((n) => n + 1);
     } catch (err) {
       console.error('Error marking as read:', err);
     }
   };
+
   const getUnreadCount = () => notifications.filter((n) => !n.read).length;
 
   const updateMoodDraft = (patch) => {
@@ -309,8 +342,9 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      currentUser, notifTick, moodDraft,
+      currentUser, notifTick, moodDraft, notifications,
       register, login, setRole, saveDetails,
+      refreshUser, fetchNotifications,
       logMoodEntry, deleteLogEntry,
       sendConnectionRequest, respondToRequest, disconnect,
       sendMessage, getMessages,

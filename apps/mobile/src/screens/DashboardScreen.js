@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, Image,
+  StyleSheet, SafeAreaView, Image, RefreshControl,
 } from 'react-native';
 import { Card, BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +10,7 @@ import { colors, spacing, radius } from '../theme';
 const icons = {
   weekly: require('../../assets/icons/report.png'),
   goals: require('../../assets/icons/goal.png'),
- };
+};
 
 // Relapse risk label + color based on score 0-100
 function getRiskInfo(score) {
@@ -20,8 +20,16 @@ function getRiskInfo(score) {
 }
 
 export default function DashboardScreen({ navigation }) {
-  const { currentUser, getUnreadCount } = useAuth();
+  const { currentUser, getUnreadCount, refreshUser } = useAuth();
   const unreadCount = getUnreadCount();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshUser();
+    setRefreshing(false);
+  }, [refreshUser]);
 
   if (!currentUser) {
     navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
@@ -32,7 +40,7 @@ export default function DashboardScreen({ navigation }) {
   const initial = firstName ? firstName[0].toUpperCase() : '?';
   console.log('Initial:', initial);
   const isPeer = role === 'Peer';
-  
+
   // Get top triggers from all logs
   const triggerCount = {};
   moodLogs.forEach((log) => {
@@ -45,17 +53,28 @@ export default function DashboardScreen({ navigation }) {
 
   const risk = getRiskInfo(lastRelapseRisk);
   const thumbPct = `${Math.min(95, Math.max(5, risk.pct))}%`;
-    const triggerIcons = {
-  top: require('../../assets/icons/top-trigger.png'),
-  second: require('../../assets/icons/second-trigger.png'),
-};
 
+  const triggerIcons = {
+    top: require('../../assets/icons/top-trigger.png'),
+    second: require('../../assets/icons/second-trigger.png'),
+  };
 
   // ── PEER DASHBOARD ──────────────────────────────────────────────────────
   if (isPeer) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.lavender}
+              colors={[colors.lavender]}
+            />
+          }
+        >
           <View style={styles.headerRow}>
             <View>
               <Text style={styles.greetSub}>Welcome,</Text>
@@ -103,11 +122,19 @@ export default function DashboardScreen({ navigation }) {
   // ── VAPE USER DASHBOARD ─────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.lavender}
+            colors={[colors.lavender]}
+          />
+        }
+      >
         <View style={styles.headerRow}>
-          {/* Streak pill — top left */}
-
           <View style={{ flex: 1, paddingLeft: 10 }}>
             <Text style={styles.greetSub}>Are you feeling good today,</Text>
             <Text style={styles.greetName}>{firstName}?</Text>
@@ -119,23 +146,23 @@ export default function DashboardScreen({ navigation }) {
 
         {/* Streak Card — tap to open calendar */}
         <TouchableOpacity activeOpacity={0.85} onPress={() => navigation.navigate('Calendar')}>
-        <View style={styles.streakCard}>
-          <View style={styles.streakRow}>
-            <View>
-              <Text style={styles.streakSubLabel}>VAPE-FREE STREAK</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 4 }}>
-                <Text style={styles.streakNumber}>{streak}</Text>
-                <Text style={styles.streakUnit}>days smoke-free</Text>
+          <View style={styles.streakCard}>
+            <View style={styles.streakRow}>
+              <View>
+                <Text style={styles.streakSubLabel}>VAPE-FREE STREAK</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 4 }}>
+                  <Text style={styles.streakNumber}>{streak}</Text>
+                  <Text style={styles.streakUnit}>days smoke-free</Text>
+                </View>
+              </View>
+              <View style={{ alignItems: 'flex-end' }}>
+                <Text style={styles.streakPts}>{totalPoints}</Text>
+                <Text style={styles.streakPtsLabel}>points</Text>
               </View>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.streakPts}>{totalPoints}</Text>
-              <Text style={styles.streakPtsLabel}>points</Text>
-            </View>
+            <Text style={styles.streakQuote}>"Cravings are temporary. Freedom is forever."</Text>
+            <Text style={{ fontSize: 10, color: colors.lavender, textAlign: 'right', marginTop: 6 }}>Tap to view calendar ›</Text>
           </View>
-          <Text style={styles.streakQuote}>"Cravings are temporary. Freedom is forever."</Text>
-          <Text style={{ fontSize: 10, color: colors.lavender, textAlign: 'right', marginTop: 6 }}>Tap to view calendar ›</Text>
-        </View>
         </TouchableOpacity>
 
         {/* Stats Row */}
@@ -211,8 +238,6 @@ export default function DashboardScreen({ navigation }) {
               </View>
             ))}
           </View>
-
-         
         )}
 
         <TouchableOpacity style={styles.logBtn} onPress={() => navigation.navigate('Mood')}>
@@ -243,12 +268,11 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', paddingTop: spacing.lg, marginBottom: spacing.lg },
   greetSub: { fontSize: 13, color: colors.textMuted },
   greetName: { fontSize: 20, fontWeight: '800', color: colors.text },
-  // Streak pill — top left
   smallIcon: {
-  width: 24,
-  height: 24,
-  resizeMode: 'contain',
-},
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+  },
   streakPill: {
     flexDirection: 'column', alignItems: 'center',
     backgroundColor: 'rgba(181,125,218,0.18)', borderRadius: radius.md,
@@ -258,7 +282,7 @@ const styles = StyleSheet.create({
   streakPillFire: { fontSize: 16 },
   streakPillNum: { fontSize: 18, fontWeight: '800', color: colors.lavender, lineHeight: 22 },
   streakPillLabel: { fontSize: 9, color: colors.textMuted, fontWeight: '600' },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center', },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: colors.porcelain, fontWeight: '800', fontSize: 16 },
   streakCard: { backgroundColor: colors.cardSolid, borderWidth: 1, borderColor: 'rgba(181,125,218,0.35)', borderRadius: radius.xl, padding: 22, marginBottom: 14 },
   streakRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
@@ -274,9 +298,9 @@ const styles = StyleSheet.create({
   statNumber: { fontSize: 26, fontWeight: '800', color: colors.text },
   progressTrack: { height: 6, backgroundColor: 'rgba(170,160,187,0.2)', borderRadius: 3, marginTop: 10, overflow: 'hidden' },
   progressFill: { height: '100%', borderRadius: 3, backgroundColor: colors.frenchBlue },
-  riskBar: { height: 8, borderRadius: 4, overflow: 'visible', position: 'relative', marginVertical: 8, backgroundColor: 'transparent',
-    borderWidth: 0,
-    // gradient-like via separate views
+  riskBar: {
+    height: 8, borderRadius: 4, overflow: 'visible', position: 'relative', marginVertical: 8,
+    backgroundColor: 'transparent', borderWidth: 0,
   },
   riskBarBg: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 4 },
   riskThumb: { position: 'absolute', width: 16, height: 16, borderRadius: 8, backgroundColor: colors.porcelain, top: -4, transform: [{ translateX: -8 }], shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.4, shadowRadius: 4, elevation: 4 },
@@ -285,12 +309,12 @@ const styles = StyleSheet.create({
   badgeNeutral: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(170,160,187,0.15)', borderWidth: 1, borderColor: 'rgba(170,160,187,0.3)' },
   triggerRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
   triggerCard: { flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md, padding: 14 },
- triggerIcon: {
-  width: 24,
-  height: 24,
-  resizeMode: 'contain',
-  marginBottom: 6,
-},
+  triggerIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
+    marginBottom: 6,
+  },
   triggerName: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 6 },
   badgeHigh: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(224,112,112,0.15)' },
   badgeMod: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20, backgroundColor: 'rgba(240,192,112,0.15)' },

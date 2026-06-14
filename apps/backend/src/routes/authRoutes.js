@@ -37,12 +37,20 @@ authRoutes.post('/register', asyncHandler(async (req, res) => {
 authRoutes.post('/login', asyncHandler(async (req, res) => {
   const identifier = String(req.body.identifier || '').trim().toLowerCase();
   const password = String(req.body.password || '');
-  const { data, error } = await supabase.from('app_users').select('*').or(`email.eq.${identifier},username.eq.${identifier}`).single();
+
+  const { data, error } = await supabase
+    .from('app_users')
+    .select('*')
+    .or(`email.eq.${identifier},username.eq.${identifier}`)
+    .single();
 
   if (error || !data || !(await bcrypt.compare(password, data.password_hash))) {
     return res.status(401).json({ error: 'Invalid credentials. Please check and try again.' });
   }
-  if (req.body.role && data.role && req.body.role !== data.role) return res.status(403).json({ error: 'Role mismatch.' });
+
+  if (req.body.role && data.role && req.body.role !== data.role) {
+    return res.status(403).json({ error: 'Role mismatch.' });
+  }
 
   const user = toUser(data);
   res.json({ token: signToken(user), user });
