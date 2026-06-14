@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
   const [notifTick, setNotifTick] = useState(0);
   const [moodDraft, setMoodDraft] = useState(createEmptyMoodDraft);
   const [notifications, setNotifications] = useState([]);
+  const [messagesCache, setMessagesCache] = useState({}); // { username: [messages] }
 
   const refresh = (user) => {
     setCurrentUser({ ...user });
@@ -37,6 +38,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (currentUser) fetchNotifications();
     else setNotifications([]);
+  }, [currentUser?.id]);
+
+  // Poll for new notifications every 5 seconds
+  useEffect(() => {
+    if (!currentUser) return;
+    const interval = setInterval(() => fetchNotifications(), 5000);
+    return () => clearInterval(interval);
   }, [currentUser?.id]);
 
   // ── REGISTER ─────────────────────────────────────────────────────────────
@@ -191,13 +199,19 @@ export function AuthProvider({ children }) {
 
   const respondToRequest = async (requestId, accept, relationship = null) => {
     try {
-      await apiRequest(`/connections/${requestId}`, {
+      const data = await apiRequest(`/connections/${requestId}`, {
         method: 'PATCH',
         body: JSON.stringify({ accept, relationship }),
       });
+      // Remove the notification from local state immediately
+      setNotifications((prev) => prev.filter((n) => n.requestId !== requestId));
+      // Refresh user data and fetch fresh notifications from backend
       refresh(currentUser);
+      fetchNotifications();
+      return { success: true, ...data };
     } catch (err) {
       console.error('Error responding to request:', err);
+      throw err;
     }
   };
 
@@ -219,28 +233,52 @@ export function AuthProvider({ children }) {
         method: 'POST',
         body: JSON.stringify({ toUsername, text: text.trim() }),
       });
+      // Refresh messages after sending
+      await fetchMessages(toUsername);
     } catch (err) {
       console.error('Error sending message:', err);
     }
   };
 
-  const getMessages = async (withUsername) => {
+  const fetchMessages = async (withUsername) => {
     if (!currentUser) return [];
     try {
       const data = await apiRequest(`/messages/${withUsername}`);
-      return data.messages || [];
+      const msgs = data.messages || [];
+      setMessagesCache((prev) => ({ ...prev, [withUsername]: msgs }));
+      return msgs;
     } catch (err) {
       console.error('Error fetching messages:', err);
       return [];
     }
   };
 
+  const getMessages = (withUsername) => {
+    // Return cached messages immediately, fetch fresh data in background
+    if (withUsername) {
+      fetchMessages(withUsername); // Fire and forget
+    }
+    return messagesCache[withUsername] || [];
+  };
+
   // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
   const fetchNotifications = async () => {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.id) return;
     try {
       const data = await apiRequest('/notifications', { method: 'GET' });
-      setNotifications(data.notifications || []);
+      const normalized = (data.notifications || []).map((n) => ({
+        id: n.id,
+        type: n.type,
+        message: n.message,
+        title: n.title,
+        icon: n.icon,
+        requestId: n.request_id, // Convert snake_case to camelCase
+        fromUserId: n.from_user_id,
+        fromDisplayName: n.from_display_name,
+        read: n.read,
+        timestamp: n.display_timestamp,
+      }));
+      setNotifications(normalized);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }

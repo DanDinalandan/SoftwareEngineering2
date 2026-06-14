@@ -21,9 +21,9 @@ export default function PeerProfileScreen({ navigation }) {
   const lastName = currentUser?.lastName || '';
   const initials = [firstName[0], lastName[0]].filter(Boolean).join('').toUpperCase() || 'P';
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchUsername.trim()) return;
-    const result = sendConnectionRequest(searchUsername.trim());
+    const result = await sendConnectionRequest(searchUsername.trim());
     setSearchResult(result);
   };
 

@@ -37,7 +37,7 @@ connectionRoutes.post('/connections/request', authRequired, asyncHandler(async (
     type: 'connection_request',
     message: `${senderName} wants to be your peer supporter. Accept to let them see your progress.`,
   });
-  res.status(201).json({ request });
+  res.status(201).json({ request, targetUser: toUser(target) });
 }));
 
 connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(async (req, res) => {
@@ -48,6 +48,9 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
   const accept = Boolean(req.body.accept);
   const { error: statusError } = await supabase.from('connection_requests').update({ status: accept ? 'accepted' : 'rejected' }).eq('id', request.id);
   if (statusError) throw statusError;
+
+  // Delete the original connection request notification
+  await supabase.from('notifications').delete().eq('request_id', request.id).eq('type', 'connection_request');
 
   if (!accept) {
     await pushNotification({ toUserId: request.from_user_id, fromUserId: req.user.id, type: 'connection_rejected', message: `${req.user.firstName || req.user.username} declined your connection request.` });

@@ -5,25 +5,62 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const messageRoutes = Router();
 
-messageRoutes.get('/messages/:withUserId', authRequired, asyncHandler(async (req, res) => {
-  const withUserId = req.params.withUserId;
+async function findUserByUsername(username) {
+  const { data, error } = await supabase.from('app_users').select('id').eq('username', String(username || '').trim().toLowerCase()).single();
+  if (error || !data) return null;
+  return data.id;
+}
+
+messageRoutes.get('/messages/:withUsername', authRequired, asyncHandler(async (req, res) => {
+  const withUsername = req.params.withUsername;
+  const withUserId = await findUserByUsername(withUsername);
+  if (!withUserId) return res.status(404).json({ error: 'User not found.' });
+  
   const { data, error } = await supabase
     .from('messages')
-    .select('*')
+    .select(`
+      id,
+      from_user_id,
+      to_user_id,
+      text,
+      subject,
+      display_timestamp,
+      from_user:from_user_id(username),
+      to_user:to_user_id(username)
+    `)
     .or(`and(from_user_id.eq.${req.user.id},to_user_id.eq.${withUserId}),and(from_user_id.eq.${withUserId},to_user_id.eq.${req.user.id})`)
     .order('created_at', { ascending: true });
   if (error) throw error;
-  res.json({ messages: data });
+  
+  const messages = (data || []).map((m) => ({
+    id: m.id,
+    fromUserId: m.from_user_id,
+    toUserId: m.to_user_id,
+    fromUsername: m.from_user?.username,
+    toUsername: m.to_user?.username,
+    text: m.text,
+    subject: m.subject,
+    timestamp: m.display_timestamp,
+  }));
+  
+  res.json({ messages });
 }));
 
 messageRoutes.post('/messages', authRequired, asyncHandler(async (req, res) => {
-  if (!req.body.toUserId || !String(req.body.text || '').trim()) return res.status(400).json({ error: 'toUserId and text are required.' });
+  const toUsername = req.body.toUsername;
+  const text = String(req.body.text || '').trim();
+  
+  if (!toUsername || !text) return res.status(400).json({ error: 'toUsername and text are required.' });
+  
+  const toUserId = await findUserByUsername(toUsername);
+  if (!toUserId) return res.status(404).json({ error: 'User not found.' });
+  
   const { data, error } = await supabase
     .from('messages')
     .insert({
       from_user_id: req.user.id,
-      to_user_id: req.body.toUserId,
-      text: String(req.body.text).trim(),
+      to_user_id: toUserId,
+      text,
       subject: req.body.subject || null,
       display_timestamp: new Date().toLocaleString([], { hour: '2-digit', minute: '2-digit' }),
     })

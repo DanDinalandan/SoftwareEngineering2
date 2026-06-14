@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, TextInput,
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform, Modal, Alert, Image,
@@ -30,6 +30,13 @@ export default function SupportScreen({ navigation }) {
     setMsgText('');
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
   };
+
+  // Fetch messages when peer changes
+  useEffect(() => {
+    if (peer) {
+      getMessages(peer.username);
+    }
+  }, [peer?.username]);
 
   const handleDisconnect = () => {
     disconnect();

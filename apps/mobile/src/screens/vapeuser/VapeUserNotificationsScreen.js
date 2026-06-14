@@ -27,6 +27,9 @@ export default function VapeUserNotificationsScreen({ navigation }) {
   const [selectedRelationship, setSelectedRelationship] = useState(null);
   const [showConfirmShare, setShowConfirmShare] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [respondedNotificationId, setRespondedNotificationId] = useState(null);
 
   useEffect(() => { markAllRead(); }, []);
 
@@ -41,18 +44,38 @@ export default function VapeUserNotificationsScreen({ navigation }) {
     setShowConfirmShare(true);
   };
 
-  const handleConfirmShare = () => {
+  const handleConfirmShare = async () => {
     if (!pendingAccept || !selectedRelationship) return;
-    respondToRequest(pendingAccept.requestId, true, selectedRelationship);
-    setShowConfirmShare(false);
-    setPendingAccept(null);
-    setSelectedRelationship(null);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2500);
+    setLoading(true);
+    setError(null);
+    try {
+      await respondToRequest(pendingAccept.requestId, true, selectedRelationship);
+      setRespondedNotificationId(pendingAccept.requestId);
+      setShowConfirmShare(false);
+      setPendingAccept(null);
+      setSelectedRelationship(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2500);
+    } catch (err) {
+      setError('Failed to accept request. Please try again.');
+      console.error('Accept error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDecline = (requestId) => {
-    respondToRequest(requestId, false);
+  const handleDecline = async (requestId) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await respondToRequest(requestId, false);
+      setRespondedNotificationId(requestId);
+    } catch (err) {
+      setError('Failed to decline request. Please try again.');
+      console.error('Decline error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,37 +99,49 @@ export default function VapeUserNotificationsScreen({ navigation }) {
             </Text>
           </View>
         ) : (
-          notifications.map((n) => (
-            <View
-              key={n.id}
-              style={[styles.notifCard, !n.read && styles.notifUnread]}
-            >
-              <Image source={typeIcon[n.type] || require('../../../assets/icons/alerts.png')} style={styles.notifIcon}
-/>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.notifMsg}>{n.message}</Text>
-                <Text style={styles.notifTime}>{n.timestamp}</Text>
+          <>
+            {notifications.map((n) => {
+              // Hide notification if it was just responded to
+              if (respondedNotificationId === n.requestId) return null;
+              return (
+                <View
+                  key={n.id}
+                  style={[styles.notifCard, !n.read && styles.notifUnread]}
+                >
+                  <Image source={typeIcon[n.type] || require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.notifMsg}>{n.message}</Text>
+                    <Text style={styles.notifTime}>{n.timestamp}</Text>
 
-                {/* Accept/Decline buttons only for pending connection requests */}
-                {n.type === 'connection_request' && n.requestId && (
-                  <View style={styles.reqBtns}>
-                    <TouchableOpacity
-                      style={styles.declineBtn}
-                      onPress={() => handleDecline(n.requestId)}
-                    >
-                      <Text style={styles.declineBtnText}>Decline</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.acceptBtn}
-                      onPress={() => startAccept(n)}
-                    >
-                      <Text style={styles.acceptBtnText}>Accept</Text>
-                    </TouchableOpacity>
+                    {/* Accept/Decline buttons only for pending connection requests */}
+                    {n.type === 'connection_request' && n.requestId && (
+                      <View style={styles.reqBtns}>
+                        <TouchableOpacity
+                          style={[styles.declineBtn, loading && { opacity: 0.6 }]}
+                          disabled={loading}
+                          onPress={() => handleDecline(n.requestId)}
+                        >
+                          <Text style={styles.declineBtnText}>{loading ? '...' : 'Decline'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.acceptBtn, loading && { opacity: 0.6 }]}
+                          disabled={loading}
+                          onPress={() => startAccept(n)}
+                        >
+                          <Text style={styles.acceptBtnText}>{loading ? '...' : 'Accept'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
-                )}
+                </View>
+              );
+            })}
+            {error && (
+              <View style={[styles.notifCard, { backgroundColor: '#ff6b6b20', borderColor: '#ff6b6b' }]}>
+                <Text style={{ color: '#ff6b6b', fontWeight: '600', fontSize: 12 }}>⚠️ {error}</Text>
               </View>
-            </View>
-          ))
+            )}
+          </>
         )}
       </ScrollView>
 
