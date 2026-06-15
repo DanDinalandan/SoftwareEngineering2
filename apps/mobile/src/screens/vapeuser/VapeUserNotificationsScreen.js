@@ -13,6 +13,7 @@ const typeIcon = {
   connection_request: require('../../../assets/icons/alerts.png'),
   connection_accepted: require('../../../assets/icons/accepted.png'),
   connection_rejected: require('../../../assets/icons/rejected.png'),
+  connection_removed: require('../../../assets/icons/rejected.png'),
   high_risk: require('../../../assets/icons/warning.png'),
   vaped: require('../../../assets/icons/broken-heart.png'),
 };

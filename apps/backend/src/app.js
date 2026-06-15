@@ -7,6 +7,7 @@ import { connectionRoutes } from './routes/connectionRoutes.js';
 import { messageRoutes } from './routes/messageRoutes.js';
 import { notificationRoutes } from './routes/notificationRoutes.js';
 import { providerRoutes } from './routes/providerRoutes.js';
+import { rewardRoutes } from './routes/rewardRoutes.js';
 import { userRoutes } from './routes/userRoutes.js';
 
 export function createApp() {
@@ -22,6 +23,7 @@ export function createApp() {
   app.use(connectionRoutes);
   app.use(messageRoutes);
   app.use(notificationRoutes);
+  app.use(rewardRoutes);
 
   app.use((req, res) => {
     res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });

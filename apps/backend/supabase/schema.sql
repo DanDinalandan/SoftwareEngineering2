@@ -15,6 +15,7 @@ create table if not exists public.app_users (
   gender text not null default '',
   phone text not null default '',
   streak integer not null default 0,
+  days_logged integer not null default 0,
   total_points integer not null default 0,
   last_relapse_risk integer not null default 0 check (last_relapse_risk between 0 and 100),
   profile_complete boolean not null default false,
@@ -112,6 +113,54 @@ create table if not exists public.notifications (
 alter table public.notifications add column if not exists title text;
 alter table public.notifications add column if not exists icon text;
 
+alter table public.app_users add column if not exists days_logged integer not null default 0;
+
+update public.app_users users
+set days_logged = logs.total_logs
+from (
+  select user_id, count(*)::integer as total_logs
+  from public.mood_logs
+  group by user_id
+) logs
+where users.id = logs.user_id;
+
+create table if not exists public.user_goals (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null unique references public.app_users(id) on delete cascade,
+  label text not null default '',
+  daily_puff_limit integer,
+  weekly_goal text not null default '',
+  color text not null default '',
+  raw_goal jsonb not null default '{}'::jsonb,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.reward_goals (
+  id text primary key,
+  name text not null,
+  description text not null default '',
+  icon_key text not null default '',
+  points_required integer not null default 0,
+  criteria jsonb not null,
+  sort_order integer not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.user_reward_goals (
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  reward_goal_id text not null references public.reward_goals(id) on delete cascade,
+  progress integer not null default 0,
+  unlocked boolean not null default false,
+  unlocked_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, reward_goal_id)
+);
+
 create table if not exists public.provider_messages (
   id uuid primary key default gen_random_uuid(),
   provider_id uuid not null references public.providers(id) on delete cascade,
@@ -137,6 +186,8 @@ create index if not exists messages_conversation_idx on public.messages (from_us
 create index if not exists notifications_user_created_idx on public.notifications (to_user_id, created_at desc);
 create index if not exists otp_codes_user_created_idx on public.otp_codes (user_id, created_at desc);
 create index if not exists provider_messages_provider_created_idx on public.provider_messages (provider_id, created_at desc);
+create index if not exists user_reward_goals_user_idx on public.user_reward_goals (user_id);
+create index if not exists reward_goals_active_sort_idx on public.reward_goals (active, sort_order);
 
 alter table public.app_users enable row level security;
 alter table public.providers enable row level security;
@@ -144,5 +195,8 @@ alter table public.mood_logs enable row level security;
 alter table public.connection_requests enable row level security;
 alter table public.messages enable row level security;
 alter table public.notifications enable row level security;
+alter table public.user_goals enable row level security;
+alter table public.reward_goals enable row level security;
+alter table public.user_reward_goals enable row level security;
 alter table public.otp_codes enable row level security;
 alter table public.provider_messages enable row level security;

@@ -28,6 +28,8 @@ export function AuthProvider({ children }) {
   const [moodDraft, setMoodDraft] = useState(createEmptyMoodDraft);
   const [notifications, setNotifications] = useState([]);
   const [messagesCache, setMessagesCache] = useState({}); // { username: [messages] }
+  const [rewards, setRewards] = useState([]);
+  const [connectedVapeUser, setConnectedVapeUser] = useState(null);
 
   const refresh = (user) => {
     setCurrentUser({ ...user });
@@ -36,8 +38,15 @@ export function AuthProvider({ children }) {
 
   // Fetch notifications whenever the logged-in user changes
   useEffect(() => {
-    if (currentUser) fetchNotifications();
-    else setNotifications([]);
+    if (currentUser) {
+      fetchNotifications();
+      fetchRewards();
+      fetchConnectedVapeUser();
+    } else {
+      setNotifications([]);
+      setRewards([]);
+      setConnectedVapeUser(null);
+    }
   }, [currentUser?.id]);
 
   // Poll for new notifications every 5 seconds
@@ -116,8 +125,10 @@ export function AuthProvider({ children }) {
       const [userData] = await Promise.all([
         apiRequest('/user/me', { method: 'GET' }),
         fetchNotifications(),
+        fetchRewards(),
       ]);
       setCurrentUser(userData.user);
+      await fetchConnectedVapeUser(userData.user);
     } catch (err) {
       console.error('Error refreshing user:', err);
     }
@@ -167,21 +178,24 @@ export function AuthProvider({ children }) {
   };
 
   // ── REWARD SYSTEM ─────────────────────────────────────────────────────────
-  const REWARD_DEFS = [
-    { id: 'first_log',      icon: '01',  name: 'First Step',       pts: 10,   desc: 'Logged your first mood entry',      condition: (u) => u.moodLogs?.length >= 1 },
-    { id: 'streak_3',       icon: '03',  name: '3-Day Streak',     pts: 50,   desc: 'Stayed vape-free for 3 days',       condition: (u) => u.streak >= 3 },
-    { id: 'streak_7',       icon: '07',  name: 'One Week Clean',   pts: 100,  desc: '7 days smoke-free — incredible!',   condition: (u) => u.streak >= 7 },
-    { id: 'streak_14',      icon: '14',  name: 'Two Weeks Strong', pts: 200,  desc: '14 days and still going!',          condition: (u) => u.streak >= 14 },
-    { id: 'streak_30',      icon: '30',  name: 'One Month Free',   pts: 500,  desc: '30 days — you are a champion',      condition: (u) => u.streak >= 30 },
-    { id: 'streak_100',     icon: '100', name: '100 Days',         pts: 2000, desc: 'A legendary milestone',             condition: (u) => u.streak >= 100 },
-    { id: 'logs_7',         icon: 'L7',  name: 'Consistent Logger',pts: 80,   desc: 'Logged 7 days in a row',            condition: (u) => u.moodLogs?.length >= 7 },
-    { id: 'logs_30',        icon: 'L30', name: 'Data Driven',      pts: 300,  desc: 'Logged 30 total entries',           condition: (u) => u.moodLogs?.length >= 30 },
-    { id: 'goal_set',       icon: 'G',   name: 'Goal Setter',      pts: 30,   desc: 'Set your first quit goal',          condition: (u) => !!u.goal },
-    { id: 'peer_connected', icon: 'P',   name: 'Not Alone',        pts: 50,   desc: 'Connected with a peer supporter',   condition: (u) => !!u.connectedPeerUsername },
-  ];
+  const fetchRewards = async () => {
+    if (!currentUser || currentUser.role !== 'Vape User') {
+      setRewards([]);
+      return [];
+    }
+    try {
+      const data = await apiRequest('/rewards', { method: 'GET' });
+      const nextRewards = data.rewards || [];
+      setRewards(nextRewards);
+      return nextRewards;
+    } catch (err) {
+      console.error('Error fetching rewards:', err);
+      return [];
+    }
+  };
 
-  const getRewardDefs = () => REWARD_DEFS;
-  const getUnlockedIds = () => currentUser?.unlockedRewards || [];
+  const getRewardDefs = () => rewards;
+  const getUnlockedIds = () => rewards.filter((reward) => reward.unlocked).map((reward) => reward.id);
 
   // ── PEER CONNECTION ───────────────────────────────────────────────────────
   const sendConnectionRequest = async (toUsername) => {
@@ -206,8 +220,8 @@ export function AuthProvider({ children }) {
       // Remove the notification from local state immediately
       setNotifications((prev) => prev.filter((n) => n.requestId !== requestId));
       // Refresh user data and fetch fresh notifications from backend
-      refresh(currentUser);
-      fetchNotifications();
+      await refreshUser();
+      await fetchNotifications();
       return { success: true, ...data };
     } catch (err) {
       console.error('Error responding to request:', err);
@@ -219,7 +233,8 @@ export function AuthProvider({ children }) {
     if (!currentUser) return;
     try {
       await apiRequest('/connections', { method: 'DELETE' });
-      refresh(currentUser);
+      setMessagesCache({});
+      await refreshUser();
     } catch (err) {
       console.error('Error disconnecting:', err);
     }
@@ -307,9 +322,29 @@ export function AuthProvider({ children }) {
   };
 
   // ── HELPERS ───────────────────────────────────────────────────────────────
+  const fetchConnectedVapeUser = async (baseUser = currentUser) => {
+    if (!baseUser || baseUser.role !== 'Peer' || !baseUser.connectedVapeUserUsername) {
+      setConnectedVapeUser(null);
+      return null;
+    }
+    try {
+      const data = await apiRequest('/connections/peer-user', { method: 'GET' });
+      const user = data.user ? {
+        ...data.user,
+        moodLogs: data.moodLogs || [],
+        lastRelapseRisk: data.lastRelapseRisk || data.user.lastRelapseRisk || 0,
+      } : null;
+      setConnectedVapeUser(user);
+      return user;
+    } catch (err) {
+      setConnectedVapeUser(null);
+      return null;
+    }
+  };
+
   const getConnectedVapeUser = () => {
     if (!currentUser) return null;
-    return currentUser.connectedVapeUserUsername ? { username: currentUser.connectedVapeUserUsername } : null;
+    return connectedVapeUser || (currentUser.connectedVapeUserUsername ? { username: currentUser.connectedVapeUserUsername } : null);
   };
 
   const getConnectedPeer = () => {
@@ -333,6 +368,7 @@ export function AuthProvider({ children }) {
         body: JSON.stringify(goal),
       });
       setCurrentUser(data.user);
+      await fetchRewards();
     } catch (err) {
       console.error('Error setting goal:', err);
     }
@@ -388,9 +424,9 @@ export function AuthProvider({ children }) {
       sendMessage, getMessages,
       getNotifications, markAllRead, getUnreadCount,
       updateMoodDraft, clearMoodDraft,
-      getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
+      getConnectedVapeUser, fetchConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
       setGoal, update2FA, resetProgress, deleteAccount,
-      getRewardDefs, getUnlockedIds,
+      getRewardDefs, getUnlockedIds, fetchRewards,
       logout,
     }}>
       {children}

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authRequired } from '../middleware/auth.js';
 import { pushNotification } from '../services/notifications.js';
 import { supabase } from '../supabase.js';
+import { syncRewardsForUser } from '../services/rewards.js';
 import { toMoodLog, toUser } from '../utils/mappers.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { calculateRelapseRisk } from '../utils/patientInsights.js';
@@ -65,9 +66,31 @@ userRoutes.put('/user/role', authRequired, asyncHandler(async (req, res) => {
 }));
 
 userRoutes.put('/user/goal', authRequired, asyncHandler(async (req, res) => {
-  const { data, error } = await supabase.from('app_users').update({ goal: req.body, updated_at: new Date().toISOString() }).eq('id', req.user.id).select('*').single();
+  const now = new Date().toISOString();
+  const goal = req.body || null;
+  const { data, error } = await supabase.from('app_users').update({ goal, updated_at: now }).eq('id', req.user.id).select('*').single();
   if (error) throw error;
-  res.json({ user: toUser(data) });
+
+  if (goal) {
+    const { error: goalError } = await supabase
+      .from('user_goals')
+      .upsert({
+        user_id: req.user.id,
+        label: goal.label || '',
+        daily_puff_limit: goal.dailyPuffLimit ?? null,
+        weekly_goal: goal.weeklyGoal || '',
+        color: goal.color || '',
+        raw_goal: goal,
+        active: true,
+        updated_at: now,
+      }, { onConflict: 'user_id' });
+    if (goalError) throw goalError;
+  }
+
+  const rewards = await syncRewardsForUser(req.user.id);
+  const { data: updatedUser, error: updatedUserError } = await supabase.from('app_users').select('*').eq('id', req.user.id).single();
+  if (updatedUserError) throw updatedUserError;
+  res.json({ user: toUser(updatedUser || data), newlyUnlocked: rewards.newlyUnlocked });
 }));
 
 userRoutes.patch('/user/phone', authRequired, asyncHandler(async (req, res) => {
@@ -89,13 +112,14 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
   // FIX: Always fetch fresh user data from DB before computing new values.
   const { data: freshUser, error: freshError } = await supabase
     .from('app_users')
-    .select('streak, total_points')
+    .select('streak, total_points, days_logged')
     .eq('id', req.user.id)
     .single();
   if (freshError || !freshUser) return res.status(500).json({ error: 'Could not fetch user data.' });
 
   const currentStreak = Number(freshUser.streak) || 0;
   const currentPoints = Number(freshUser.total_points) || 0;
+  const currentDaysLogged = Number(freshUser.days_logged) || 0;
   const newStreak = !vaped ? currentStreak + 1 : 0;
 
   const { data: entry, error } = await supabase
@@ -121,7 +145,13 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
 
   const { data: updatedUser, error: updateError } = await supabase
     .from('app_users')
-    .update({ streak: newStreak, total_points: currentPoints + pointsEarned, last_relapse_risk: relapseRisk, updated_at: new Date().toISOString() })
+    .update({
+      streak: newStreak,
+      total_points: currentPoints + pointsEarned,
+      days_logged: currentDaysLogged + 1,
+      last_relapse_risk: relapseRisk,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', req.user.id)
     .select('*')
     .single();
@@ -135,7 +165,8 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
     if (vaped) await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'vaped', message: `${displayName} reported vaping today. Consider reaching out.` });
   }
 
-  res.status(201).json({ entry: toMoodLog(entry), pointsEarned, newStreak, relapseRisk });
+  const rewards = await syncRewardsForUser(req.user.id);
+  res.status(201).json({ entry: toMoodLog(entry), pointsEarned, newStreak, relapseRisk, newlyUnlocked: rewards.newlyUnlocked });
 }));
 
 userRoutes.get('/mood', authRequired, asyncHandler(async (req, res) => {
@@ -154,10 +185,16 @@ userRoutes.delete('/mood/:id', authRequired, asyncHandler(async (req, res) => {
   const newStreak = !entry.vaped && req.user.streak > 0 ? req.user.streak - 1 : req.user.streak;
   const { data: updatedUser, error: updateError } = await supabase
     .from('app_users')
-    .update({ streak: newStreak, total_points: Math.max(0, req.user.totalPoints - pointsReversed), updated_at: new Date().toISOString() })
+    .update({
+      streak: newStreak,
+      total_points: Math.max(0, req.user.totalPoints - pointsReversed),
+      days_logged: Math.max(0, (req.user.daysLogged || 0) - 1),
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', req.user.id)
     .select('*')
     .single();
   if (updateError) throw updateError;
+  await syncRewardsForUser(req.user.id);
   res.json({ message: 'Log deleted', pointsReversed, newStreak: updatedUser.streak });
 }));

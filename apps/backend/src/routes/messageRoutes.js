@@ -11,10 +11,15 @@ async function findUserByUsername(username) {
   return data.id;
 }
 
+function isConnectedPair(user, otherUserId) {
+  return user.connectedPeerUserId === otherUserId || user.connectedVapeUserId === otherUserId;
+}
+
 messageRoutes.get('/messages/:withUsername', authRequired, asyncHandler(async (req, res) => {
   const withUsername = req.params.withUsername;
   const withUserId = await findUserByUsername(withUsername);
   if (!withUserId) return res.status(404).json({ error: 'User not found.' });
+  if (!isConnectedPair(req.user, withUserId)) return res.json({ messages: [] });
   
   const { data, error } = await supabase
     .from('messages')
@@ -54,6 +59,7 @@ messageRoutes.post('/messages', authRequired, asyncHandler(async (req, res) => {
   
   const toUserId = await findUserByUsername(toUsername);
   if (!toUserId) return res.status(404).json({ error: 'User not found.' });
+  if (!isConnectedPair(req.user, toUserId)) return res.status(403).json({ error: 'You can only message your connected peer support partner.' });
   
   const { data, error } = await supabase
     .from('messages')

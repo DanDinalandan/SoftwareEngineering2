@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, radius } from '../../theme';
 import PeerBottomNav from './PeerBottomNav';
 
-const typeIcon = { high_risk: require('../../../assets/icons/warning.png'), vaped: require('../../../assets/icons/broken-heart.png'), connection_request: require('../../../assets/icons/alerts.png'), connection_accepted: require('../../../assets/icons/accepted.png') };
+const typeIcon = { high_risk: require('../../../assets/icons/warning.png'), vaped: require('../../../assets/icons/broken-heart.png'), connection_request: require('../../../assets/icons/alerts.png'), connection_accepted: require('../../../assets/icons/accepted.png'), connection_removed: require('../../../assets/icons/rejected.png') };
 
 export default function PeerNotificationsScreen({ navigation }) {
   const { getNotifications, markAllRead, getUnreadCount, respondToRequest } = useAuth();
@@ -23,7 +23,7 @@ export default function PeerNotificationsScreen({ navigation }) {
 
         {notifications.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Image source={require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
+            <Image source={typeIcon[n.type] || require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
             <Text style={styles.emptyTitle}>No notifications yet</Text>
             <Text style={styles.emptyText}>You'll be notified when your connected user logs an entry.</Text>
           </View>

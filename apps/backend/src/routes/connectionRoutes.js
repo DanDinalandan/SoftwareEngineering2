@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authRequired } from '../middleware/auth.js';
 import { pushNotification } from '../services/notifications.js';
+import { syncRewardsForUser } from '../services/rewards.js';
 import { supabase } from '../supabase.js';
 import { toMoodLog, toUser } from '../utils/mappers.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -49,8 +50,15 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
   const { error: statusError } = await supabase.from('connection_requests').update({ status: accept ? 'accepted' : 'rejected' }).eq('id', request.id);
   if (statusError) throw statusError;
 
-  // Delete the original connection request notification
+  // Remove all copies of the original pending request notification so it cannot
+  // reappear after the request is accepted or declined.
   await supabase.from('notifications').delete().eq('request_id', request.id).eq('type', 'connection_request');
+  await supabase
+    .from('notifications')
+    .delete()
+    .eq('to_user_id', req.user.id)
+    .eq('from_user_id', request.from_user_id)
+    .eq('type', 'connection_request');
 
   if (!accept) {
     await pushNotification({ toUserId: request.from_user_id, fromUserId: req.user.id, type: 'connection_rejected', message: `${req.user.firstName || req.user.username} declined your connection request.` });
@@ -81,12 +89,16 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
   if (failed) throw failed.error;
 
   await pushNotification({ toUserId: peer.id, fromUserId: vapeUser.id, type: 'connection_accepted', message: `${vapeUser.first_name || vapeUser.username} accepted your connection request! You are now their peer supporter.` });
+  await syncRewardsForUser(vapeUser.id);
   res.json({ accepted: true });
 }));
 
 connectionRoutes.delete('/connections', authRequired, asyncHandler(async (req, res) => {
   const partnerId = req.user.connectedPeerUserId || req.user.connectedVapeUserId;
   if (!partnerId) return res.json({ disconnected: false });
+  const { data: partner, error: partnerError } = await supabase.from('app_users').select('*').eq('id', partnerId).single();
+  if (partnerError) throw partnerError;
+
   const clear = {
     connected_peer_user_id: null,
     connected_vape_user_id: null,
@@ -103,6 +115,32 @@ connectionRoutes.delete('/connections', authRequired, asyncHandler(async (req, r
   ]);
   const failed = results.find((result) => result.error);
   if (failed) throw failed.error;
+
+  const { error: messageDeleteError } = await supabase
+    .from('messages')
+    .delete()
+    .or(`and(from_user_id.eq.${req.user.id},to_user_id.eq.${partnerId}),and(from_user_id.eq.${partnerId},to_user_id.eq.${req.user.id})`);
+  if (messageDeleteError) throw messageDeleteError;
+
+  const removerName = req.user.firstName || req.user.username;
+  const partnerName = partner.first_name || partner.username;
+  await Promise.all([
+    pushNotification({
+      toUserId: partnerId,
+      fromUserId: req.user.id,
+      type: 'connection_removed',
+      message: `${removerName} removed the peer support connection. Your shared messages were cleared.`,
+    }),
+    pushNotification({
+      toUserId: req.user.id,
+      fromUserId: partnerId,
+      type: 'connection_removed',
+      message: `You removed your peer support connection with ${partnerName}. Your shared messages were cleared.`,
+    }),
+  ]);
+
+  const vapeUserId = req.user.role === 'Vape User' ? req.user.id : partner.id;
+  await syncRewardsForUser(vapeUserId);
   res.json({ disconnected: true });
 }));
 

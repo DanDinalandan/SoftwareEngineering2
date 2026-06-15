@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, Image,
@@ -7,44 +7,17 @@ import { BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
 import { colors, spacing, radius } from '../theme';
 
-const REWARDS = [
-  {
-    icon: require('../../assets/icons/first-step.png'),
-    name: 'First Step',
-    pts: 10,
-    desc: 'Log your first entry',
-  },
-  {
-    icon: require('../../assets/icons/3-day.png'),
-    name: '3-Day Streak',
-    pts: 30,
-    desc: 'Stay vape-free for 3 days',
-  },
-  {
-    icon: require('../../assets/icons/one-week.png'),
-    name: 'One Week',
-    pts: 70,
-    desc: '7 days vape-free — incredible!',
-  },
-  {
-    icon: require('../../assets/icons/two-weeks.png'),
-    name: 'Two Weeks',
-    pts: 140,
-    desc: '14 days and counting!',
-  },
-  {
-    icon: require('../../assets/icons/one-month.png'),
-    name: 'One Month',
-    pts: 300,
-    desc: '30 days — you are a champion',
-  },
-  {
-    icon: require('../../assets/icons/hundred-days.png'),
-    name: '100 Days',
-    pts: 1000,
-    desc: 'A true milestone. Legendary.',
-  },
-];
+const rewardIcons = {
+  'first-step': require('../../assets/icons/first-step.png'),
+  '3-day': require('../../assets/icons/3-day.png'),
+  'one-week': require('../../assets/icons/one-week.png'),
+  'two-weeks': require('../../assets/icons/two-weeks.png'),
+  'one-month': require('../../assets/icons/one-month.png'),
+  'hundred-days': require('../../assets/icons/hundred-days.png'),
+  calendar: require('../../assets/icons/calendar.png'),
+  goal: require('../../assets/icons/goal.png'),
+  support: require('../../assets/icons/support.png'),
+};
 
 const FILTERS = ['All', 'Unlocked', 'Locked'];
 const statusIcons = {
@@ -52,15 +25,20 @@ const statusIcons = {
   locked: require('../../assets/icons/locked.png'),
 };
 export default function RewardsScreen({ navigation }) {
-  const { currentUser, getUnreadCount } = useAuth();
+  const { currentUser, getUnreadCount, getRewardDefs, fetchRewards } = useAuth();
   const unreadCount = getUnreadCount();
   const totalPoints = currentUser?.totalPoints || 0;
   const streak = currentUser?.streak || 0;
+  const rewards = getRewardDefs();
   const [activeFilter, setActiveFilter] = useState('All');
 
-  const filtered = REWARDS.filter((r) => {
-    if (activeFilter === 'Unlocked') return totalPoints >= r.pts;
-    if (activeFilter === 'Locked') return totalPoints < r.pts;
+  useEffect(() => {
+    fetchRewards();
+  }, []);
+
+  const filtered = rewards.filter((r) => {
+    if (activeFilter === 'Unlocked') return r.unlocked;
+    if (activeFilter === 'Locked') return !r.unlocked;
     return true;
   });
 
@@ -96,15 +74,15 @@ export default function RewardsScreen({ navigation }) {
         </View>
 
         {filtered.map((r) => {
-          const unlocked = totalPoints >= r.pts;
-          const progress = Math.min(100, (totalPoints / r.pts) * 100);
+          const unlocked = r.unlocked;
+          const progress = r.progressPercent ?? 0;
           return (
             <View key={r.name} style={styles.rewardCard}>
-              <Image source={r.icon} style={styles.rewardIcon} />
+              <Image source={rewardIcons[r.icon] || rewardIcons.goal} style={styles.rewardIcon} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.rewardName}>{r.name}</Text>
                 <Text style={styles.rewardDesc}>{r.desc}</Text>
-                <Text style={styles.rewardPts}>{r.pts} pts required</Text>
+                <Text style={styles.rewardPts}>{r.progress || 0}/{r.target || 1} progress - {r.pts} pts reward</Text>
                 <View style={styles.progressTrack}>
                   <View style={[styles.progressFill, { width: `${progress}%` }]} />
                 </View>

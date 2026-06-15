@@ -14,6 +14,7 @@ export function toUser(row) {
     gender: row.gender || '',
     phone: row.phone || '',
     streak: row.streak || 0,
+    daysLogged: row.days_logged || 0,
     totalPoints: row.total_points || 0,
     lastRelapseRisk: row.last_relapse_risk || 0,
     profileComplete: row.profile_complete || false,

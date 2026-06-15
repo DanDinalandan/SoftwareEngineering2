@@ -33,6 +33,38 @@ values
   ('44444444-4444-4444-4444-444444444444', current_date - interval '1 day', 'Great', array[]::text[], 1, false, 0, 'Best day in weeks.', 9, 25, 'Yesterday 6:10 PM')
 on conflict (user_id, log_date) do nothing;
 
+update public.app_users users
+set days_logged = logs.total_logs
+from (
+  select user_id, count(*)::integer as total_logs
+  from public.mood_logs
+  group by user_id
+) logs
+where users.id = logs.user_id;
+
+insert into public.reward_goals
+  (id, name, description, icon_key, points_required, criteria, sort_order)
+values
+  ('first_log', 'First Step', 'Logged your first mood entry', 'first-step', 10, '{"type":"log_count","target":1}'::jsonb, 10),
+  ('streak_3', '3-Day Streak', 'Stayed vape-free for 3 days', '3-day', 50, '{"type":"streak","target":3}'::jsonb, 20),
+  ('streak_7', 'One Week Clean', '7 days smoke-free - incredible!', 'one-week', 100, '{"type":"streak","target":7}'::jsonb, 30),
+  ('streak_14', 'Two Weeks Strong', '14 days and still going!', 'two-weeks', 200, '{"type":"streak","target":14}'::jsonb, 40),
+  ('streak_30', 'One Month Free', '30 days - you are a champion', 'one-month', 500, '{"type":"streak","target":30}'::jsonb, 50),
+  ('streak_100', '100 Days', 'A legendary milestone', 'hundred-days', 2000, '{"type":"streak","target":100}'::jsonb, 60),
+  ('logs_7', 'Consistent Logger', 'Logged 7 total entries', 'calendar', 80, '{"type":"log_count","target":7}'::jsonb, 70),
+  ('logs_30', 'Data Driven', 'Logged 30 total entries', 'calendar', 300, '{"type":"log_count","target":30}'::jsonb, 80),
+  ('goal_set', 'Goal Setter', 'Set your first quit goal', 'goal', 30, '{"type":"goal_set","target":1}'::jsonb, 90),
+  ('peer_connected', 'Not Alone', 'Connected with a peer supporter', 'support', 50, '{"type":"peer_connected","target":1}'::jsonb, 100)
+on conflict (id) do update set
+  name = excluded.name,
+  description = excluded.description,
+  icon_key = excluded.icon_key,
+  points_required = excluded.points_required,
+  criteria = excluded.criteria,
+  sort_order = excluded.sort_order,
+  active = true,
+  updated_at = now();
+
 insert into public.notifications (to_user_id, from_user_id, type, title, icon, message, read, display_timestamp)
 values
   ('33333333-3333-3333-3333-333333333333', null, 'alert', 'High relapse risk - Marco K.', '🚨', 'Craving intensity spiked to 9/10. Recommend immediate check-in.', false, 'Today 10:42 AM'),

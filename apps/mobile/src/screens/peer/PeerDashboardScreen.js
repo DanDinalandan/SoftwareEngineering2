@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView,
@@ -14,11 +14,15 @@ function getRiskInfo(score) {
 }
 
 export default function PeerDashboardScreen({ navigation }) {
-  const { currentUser, getConnectedVapeUser, getPendingRequestsForMe, respondToRequest, getUnreadCount } = useAuth();
+  const { currentUser, getConnectedVapeUser, fetchConnectedVapeUser, getPendingRequestsForMe, respondToRequest, getUnreadCount } = useAuth();
   const connected = getConnectedVapeUser();
   const pendingRequests = getPendingRequestsForMe();
   const unread = getUnreadCount();
   const firstName = currentUser?.firstName || currentUser?.username || 'Supporter';
+
+  useEffect(() => {
+    fetchConnectedVapeUser();
+  }, [currentUser?.connectedVapeUserUsername]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -85,7 +89,7 @@ export default function PeerDashboardScreen({ navigation }) {
                 <Text style={styles.progressLbl}>Points</Text>
               </View>
               <View style={styles.progressCard}>
-                <Text style={styles.progressNum}>{connected.moodLogs?.length || 0}</Text>
+                <Text style={styles.progressNum}>{connected.daysLogged || connected.moodLogs?.length || 0}</Text>
                 <Text style={styles.progressLbl}>Logs</Text>
               </View>
             </View>
@@ -118,7 +122,7 @@ export default function PeerDashboardScreen({ navigation }) {
             {(connected.moodLogs || []).length === 0 ? (
               <View style={styles.emptyCard}><Text style={styles.emptyText}>No entries yet. Encourage them to log!</Text></View>
             ) : (
-              [...(connected.moodLogs || [])].reverse().slice(0, 5).map((log) => (
+              [...(connected.moodLogs || [])].slice(0, 5).map((log) => (
                 <View key={log.id} style={styles.logRow}>
                   <View style={[styles.moodDot, { backgroundColor: { Great: colors.success, Good: '#9FD08A', Okay: colors.warning, Bad: '#E09A70', Awful: colors.danger }[log.mood] || colors.textMuted }]} />
                   <View style={{ flex: 1 }}>
