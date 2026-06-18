@@ -1,11 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, Image, RefreshControl,
 } from 'react-native';
 import { Card, BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
+import { apiRequest } from '../services/api';
 import { colors, spacing, radius } from '../theme';
+import { getDeviceTimezone } from '../utils/time';
 
 const icons = {
   weekly: require('../../assets/icons/report.png'),
@@ -24,12 +26,29 @@ export default function DashboardScreen({ navigation }) {
   const unreadCount = getUnreadCount();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [insights, setInsights] = useState(null);
+
+  const fetchInsights = useCallback(async () => {
+    if (!currentUser || currentUser.role !== 'Vape User') return null;
+    try {
+      const data = await apiRequest(`/analytics/dashboard?timezone=${encodeURIComponent(getDeviceTimezone())}`);
+      setInsights(data);
+      return data;
+    } catch (err) {
+      console.error('Error fetching dashboard insights:', err);
+      return null;
+    }
+  }, [currentUser?.id, currentUser?.role]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshUser();
+    await Promise.all([refreshUser(), fetchInsights()]);
     setRefreshing(false);
-  }, [refreshUser]);
+  }, [refreshUser, fetchInsights]);
+
+  useEffect(() => {
+    fetchInsights();
+  }, [fetchInsights]);
 
   if (!currentUser) {
     navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
@@ -46,10 +65,13 @@ export default function DashboardScreen({ navigation }) {
   moodLogs.forEach((log) => {
     (log.triggers || []).forEach((t) => { triggerCount[t] = (triggerCount[t] || 0) + 1; });
   });
-  const topTriggers = Object.entries(triggerCount)
+  const localTopTriggers = Object.entries(triggerCount)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
     .map(([t]) => t);
+  const topTriggers = (insights?.topTriggers?.length
+    ? insights.topTriggers.slice(0, 2).map((item) => item.trigger)
+    : localTopTriggers);
 
   const risk = getRiskInfo(lastRelapseRisk);
   const thumbPct = `${Math.min(95, Math.max(5, risk.pct))}%`;
@@ -160,7 +182,9 @@ export default function DashboardScreen({ navigation }) {
                 <Text style={styles.streakPtsLabel}>points</Text>
               </View>
             </View>
-            <Text style={styles.streakQuote}>"Cravings are temporary. Freedom is forever."</Text>
+            <Text style={styles.streakQuote}>
+              "{insights?.quote?.quote || 'Cravings are temporary. Freedom is forever.'}"
+            </Text>
             <Text style={{ fontSize: 10, color: colors.lavender, textAlign: 'right', marginTop: 6 }}>Tap to view calendar ›</Text>
           </View>
         </TouchableOpacity>
@@ -240,6 +264,16 @@ export default function DashboardScreen({ navigation }) {
           </View>
         )}
 
+        {insights?.recommendation && (
+          <Card>
+            <Text style={styles.statLabel}>SUGGESTION</Text>
+            <Text style={styles.suggestionTitle}>{insights.recommendation.title || 'Personalized Suggestion'}</Text>
+            <Text style={styles.suggestionText}>
+              {insights.recommendation.summary || insights.recommendation.recommendations?.[0]}
+            </Text>
+          </Card>
+        )}
+
         <TouchableOpacity style={styles.logBtn} onPress={() => navigation.navigate('Mood')}>
           <Text style={styles.logBtnText}>Log Today's Entry</Text>
         </TouchableOpacity>
@@ -292,6 +326,8 @@ const styles = StyleSheet.create({
   streakPts: { fontSize: 20, fontWeight: '800', color: colors.lavender },
   streakPtsLabel: { fontSize: 11, color: colors.textMuted },
   streakQuote: { fontSize: 12, color: colors.textDim, marginTop: 10, fontStyle: 'italic' },
+  suggestionTitle: { fontSize: 15, fontWeight: '800', color: colors.text, marginBottom: 6 },
+  suggestionText: { fontSize: 13, color: colors.bone, lineHeight: 19 },
   statsRow: { flexDirection: 'row', marginBottom: 14 },
   statCard: { backgroundColor: colors.cardSolid, borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, padding: 16 },
   statLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.8, color: colors.textMuted, textTransform: 'uppercase', marginBottom: 6 },

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { authRequired } from '../middleware/auth.js';
+import { buildRecommendations, getDailyQuote } from '../services/analytics.js';
 import { pushNotification } from '../services/notifications.js';
+import { getClientTimezone, getDisplayTimestamp, getLocalDate, getLocalDateTime } from '../services/time.js';
 import { supabase } from '../supabase.js';
 import { syncRewardsForUser } from '../services/rewards.js';
 import { toMoodLog, toUser } from '../utils/mappers.js';
@@ -100,16 +102,16 @@ userRoutes.patch('/user/phone', authRequired, asyncHandler(async (req, res) => {
 }));
 
 userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
-  // Use the timezone sent from the user's phone so log_date matches
-  // their local date — not the server's UTC date.
-  const tz = req.body.timezone || 'UTC';
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: tz }); // → 'YYYY-MM-DD'
+  const tz = getClientTimezone(req.body);
+  const now = new Date();
+  const today = req.body.localDate || getLocalDate(tz, now);
   const triggers = Array.isArray(req.body.triggers) ? req.body.triggers : [];
   const vaped = Boolean(req.body.vaped);
   const relapseRisk = calculateRelapseRisk({ mood: req.body.mood, craving: req.body.craving, triggers });
   const pointsEarned = 10 + (!vaped ? 15 : 0);
+  const vapedSessions = Array.isArray(req.body.vapedSessions) ? req.body.vapedSessions : [];
+  const vapeMinutes = vaped ? Number(req.body.totalVapingMinutes ?? req.body.vapeMinutes ?? 0) : 0;
 
-  // FIX: Always fetch fresh user data from DB before computing new values.
   const { data: freshUser, error: freshError } = await supabase
     .from('app_users')
     .select('streak, total_points, days_logged')
@@ -132,11 +134,15 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
       craving: Number(req.body.craving),
       vaped,
       puffs_today: vaped ? Number(req.body.puffsToday || 0) : 0,
+      vape_minutes: vapeMinutes,
+      vaped_sessions: vaped ? vapedSessions : [],
       vaped_hour: vaped ? req.body.vapedHour || null : null,
       comment: req.body.comment || '',
       relapse_risk: relapseRisk,
       points: pointsEarned,
-      display_timestamp: new Date().toLocaleString([], { timeZone: tz, dateStyle: 'medium', timeStyle: 'short' }),
+      device_timezone: tz,
+      local_logged_at: getLocalDateTime(tz, now),
+      display_timestamp: getDisplayTimestamp(tz, now),
     })
     .select('*')
     .single();
@@ -150,7 +156,8 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
       total_points: currentPoints + pointsEarned,
       days_logged: currentDaysLogged + 1,
       last_relapse_risk: relapseRisk,
-      updated_at: new Date().toISOString(),
+      timezone: tz,
+      updated_at: now.toISOString(),
     })
     .eq('id', req.user.id)
     .select('*')
@@ -160,15 +167,31 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
   if (updatedUser.connected_peer_user_id && updatedUser.progress_shared_with_peer) {
     const displayName = updatedUser.first_name || updatedUser.username;
     if (relapseRisk > 60 || ['Awful', 'Bad'].includes(req.body.mood)) {
-      await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'high_risk', message: `${displayName} logged ${String(req.body.mood).toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.` });
+      await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'high_risk', message: `${displayName} logged ${String(req.body.mood).toLowerCase()} mood with ${relapseRisk}% relapse risk. They may need support.`, timezone: tz });
     }
-    if (vaped) await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'vaped', message: `${displayName} reported vaping today. Consider reaching out.` });
+    if (vaped) await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'vaped', message: `${displayName} reported vaping today. Consider reaching out.`, timezone: tz });
   }
 
   const rewards = await syncRewardsForUser(req.user.id);
-  res.status(201).json({ entry: toMoodLog(entry), pointsEarned, newStreak, relapseRisk, newlyUnlocked: rewards.newlyUnlocked });
-}));
+  const { data: latestLogs, error: logsError } = await supabase
+    .from('mood_logs')
+    .select('*')
+    .eq('user_id', req.user.id)
+    .order('log_date', { ascending: false });
+  if (logsError) throw logsError;
+  const recommendation = await buildRecommendations({ user: updatedUser, logs: latestLogs || [], type: 'dashboard' });
+  const quote = await getDailyQuote(req.user.id, today);
 
+  res.status(201).json({
+    entry: toMoodLog(entry),
+    pointsEarned,
+    newStreak,
+    relapseRisk,
+    newlyUnlocked: rewards.newlyUnlocked,
+    recommendation,
+    quote,
+  });
+}));
 userRoutes.get('/mood', authRequired, asyncHandler(async (req, res) => {
   const { data, error } = await supabase.from('mood_logs').select('*').eq('user_id', req.user.id).order('log_date', { ascending: false });
   if (error) throw error;

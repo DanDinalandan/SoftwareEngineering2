@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRequired } from '../middleware/auth.js';
+import { getClientTimezone, getDisplayTimestamp, getLocalDateTime } from '../services/time.js';
 import { supabase } from '../supabase.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -54,6 +55,7 @@ messageRoutes.get('/messages/:withUsername', authRequired, asyncHandler(async (r
 messageRoutes.post('/messages', authRequired, asyncHandler(async (req, res) => {
   const toUsername = req.body.toUsername;
   const text = String(req.body.text || '').trim();
+  const timezone = getClientTimezone(req.body);
   
   if (!toUsername || !text) return res.status(400).json({ error: 'toUsername and text are required.' });
   
@@ -68,7 +70,9 @@ messageRoutes.post('/messages', authRequired, asyncHandler(async (req, res) => {
       to_user_id: toUserId,
       text,
       subject: req.body.subject || null,
-      display_timestamp: new Date().toLocaleString([], { hour: '2-digit', minute: '2-digit' }),
+      device_timezone: timezone,
+      local_sent_at: getLocalDateTime(timezone),
+      display_timestamp: getDisplayTimestamp(timezone),
     })
     .select('*')
     .single();

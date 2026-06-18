@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiRequest, setAuthToken, clearAuthToken } from '../services/api';
+import { getDeviceTimezone, getLocalDateString } from '../utils/time';
 
 /**
  * Auth context — all functions now use real API calls.
@@ -152,9 +153,9 @@ export function AuthProvider({ children }) {
           puffsToday: vaped ? puffsToday : 0,
           vapedHour: vaped ? vapedHour : null,
           comment,
-          // Send the phone's local timezone to the backend so log_date
-          // is recorded in the user's local time, not UTC.
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          timezone: getDeviceTimezone(),
+          clientTimezone: getDeviceTimezone(),
+          localDate: getLocalDateString(),
         }),
       });
       // FIX: Re-fetch real data from DB instead of ghost local state update
@@ -246,7 +247,7 @@ export function AuthProvider({ children }) {
     try {
       await apiRequest('/messages', {
         method: 'POST',
-        body: JSON.stringify({ toUsername, text: text.trim() }),
+        body: JSON.stringify({ toUsername, text: text.trim(), clientTimezone: getDeviceTimezone() }),
       });
       // Refresh messages after sending
       await fetchMessages(toUsername);
