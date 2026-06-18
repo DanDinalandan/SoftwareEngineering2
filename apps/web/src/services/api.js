@@ -48,6 +48,29 @@ export const api = {
     return data.provider;
   },
 
+  updateNurseProfile: async (payload) => {
+    const data = await request('/provider/me', {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return data.provider;
+  },
+
+  changeProviderPassword: async ({ currentPassword, newPassword }) => {
+    return request('/provider/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  },
+
+  updateNotificationPreferences: async (preferences) => {
+    const data = await request('/provider/notification-preferences', {
+      method: 'PATCH',
+      body: JSON.stringify({ preferences }),
+    });
+    return data.provider;
+  },
+
   getPatients: async () => {
     const data = await request('/provider/patients');
     return data.patients;

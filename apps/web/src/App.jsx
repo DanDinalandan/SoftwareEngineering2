@@ -94,7 +94,7 @@ export default function App() {
     statistics: <StatisticsPage activePatientId={activePatientId} />,
     patients:   <PatientListPage patientsList={patientsList} onViewPatient={(id) => { setActivePatientId(id); setActivePage('statistics') }} onRemovePatient={handleRemovePatient} />,
     messages:   <MessagesPage onUnreadChange={setUnreadMsgCount} patientsList={patientsList} />,
-    account:    <AccountSettingsPage onLogout={handleLogout} nurse={nurse} />,
+    account:    <AccountSettingsPage onLogout={handleLogout} nurse={nurse} onNurseUpdate={setNurse} />,
     history:    <HistoryPage activePatientId={activePatientId} patientsList={patientsList} onBack={() => setActivePage('dashboard')} />
   }
 

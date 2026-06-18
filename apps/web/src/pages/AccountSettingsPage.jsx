@@ -1,21 +1,40 @@
 import { useState } from 'react'
 import { prefToggles } from '../data/displayOptions.js'
+import { api } from '../services/api.js'
 
 // ── Toggle switch component ───────────────────────────────────
-function Toggle({ defaultOn }) {
-  const [on, setOn] = useState(defaultOn)
-
+function Toggle({ on, onChange }) {
   return (
     <button
       className={`toggle-btn ${on ? 'on' : 'off'}`}
-      onClick={() => setOn(!on)}
+      onClick={() => onChange(!on)}
       aria-label="Toggle preference"
     />
   )
 }
 
 // ── Profile card (left column) ────────────────────────────────
-function ProfileCard({ nurse }) {
+function ProfileCard({ nurse, onNurseUpdate }) {
+  const [form, setForm] = useState({
+    firstName: nurse?.firstName || nurse?.name?.split(' ')?.[0] || '',
+    lastName: nurse?.lastName || nurse?.name?.split(' ')?.slice(1).join(' ') || '',
+    department: nurse?.department || '',
+    phone: nurse?.phone || '',
+  })
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  function saveProfile() {
+    setStatus('')
+    setError('')
+    api.updateNurseProfile(form)
+      .then((provider) => {
+        onNurseUpdate?.(provider)
+        setStatus('Profile saved.')
+      })
+      .catch((err) => setError(err.message || 'Unable to save profile.'))
+  }
+
   return (
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="settings-title">Profile</div>
@@ -29,7 +48,10 @@ function ProfileCard({ nurse }) {
 
       <div className="field-group">
         <div className="field-label">Full name</div>
-        <input className="field-input" type="text" defaultValue={nurse?.name ?? ''} />
+          <input className="field-input" type="text" value={`${form.firstName} ${form.lastName}`.trim()} onChange={(e) => {
+            const [firstName, ...rest] = e.target.value.split(' ')
+            setForm((prev) => ({ ...prev, firstName, lastName: rest.join(' ') }))
+          }} />
       </div>
 
       <div className="field-row">
@@ -39,7 +61,7 @@ function ProfileCard({ nurse }) {
         </div>
         <div className="field-group">
           <div className="field-label">Department</div>
-          <input className="field-input" type="text" defaultValue={nurse?.department ?? ''} />
+          <input className="field-input" type="text" value={form.department} onChange={(e) => setForm((prev) => ({ ...prev, department: e.target.value }))} />
         </div>
       </div>
 
@@ -50,35 +72,58 @@ function ProfileCard({ nurse }) {
 
       <div className="field-group">
         <div className="field-label">Phone</div>
-        <input className="field-input" type="text" defaultValue={nurse?.phone ?? ''} />
+        <input className="field-input" type="text" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} />
       </div>
 
-      <button className="btn-save">Save Profile</button>
+      {error && <div style={{ color: 'var(--red)', fontSize: 12, marginBottom: 8 }}>{error}</div>}
+      {status && <div style={{ color: 'var(--green)', fontSize: 12, marginBottom: 8 }}>{status}</div>}
+      <button className="btn-save" onClick={saveProfile}>Save Profile</button>
     </div>
   )
 }
 
 // ── Security card (left column) ───────────────────────────────
 function SecurityCard() {
-  const fields = ['Current password', 'New password', 'Confirm new password']
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  function updatePassword() {
+    setStatus('')
+    setError('')
+    if (form.newPassword !== form.confirmPassword) {
+      setError('New passwords do not match.')
+      return
+    }
+    api.changeProviderPassword(form)
+      .then(() => {
+        setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+        setStatus('Password updated.')
+      })
+      .catch((err) => setError(err.message || 'Unable to update password.'))
+  }
 
   return (
     <div className="card">
       <div className="settings-title">Security</div>
 
-      {fields.map((label) => (
-        <div key={label} className="field-group">
-          <div className="field-label">{label}</div>
-          <input
-            className="field-input"
-            type="password"
-            placeholder={`Enter ${label.toLowerCase()}`}
-          />
-        </div>
-      ))}
+      <div className="field-group">
+        <div className="field-label">Current password</div>
+        <input className="field-input" type="password" value={form.currentPassword} onChange={(e) => setForm((prev) => ({ ...prev, currentPassword: e.target.value }))} />
+      </div>
+      <div className="field-group">
+        <div className="field-label">New password</div>
+        <input className="field-input" type="password" value={form.newPassword} onChange={(e) => setForm((prev) => ({ ...prev, newPassword: e.target.value }))} />
+      </div>
+      <div className="field-group">
+        <div className="field-label">Confirm new password</div>
+        <input className="field-input" type="password" value={form.confirmPassword} onChange={(e) => setForm((prev) => ({ ...prev, confirmPassword: e.target.value }))} />
+      </div>
+      {error && <div style={{ color: 'var(--red)', fontSize: 12, marginBottom: 8 }}>{error}</div>}
+      {status && <div style={{ color: 'var(--green)', fontSize: 12, marginBottom: 8 }}>{status}</div>}
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <button className="btn-save">Update Password</button>
+        <button className="btn-save" onClick={updatePassword}>Update Password</button>
         <button className="btn-danger">Sign Out All Devices</button>
       </div>
     </div>
@@ -86,22 +131,51 @@ function SecurityCard() {
 }
 
 // ── Notification preferences card (right column) ──────────────
-function NotifPrefsCard() {
+function NotifPrefsCard({ nurse, onNurseUpdate }) {
+  const defaults = {
+    highRiskAlerts: true,
+    dailyReports: true,
+    patientMessages: true,
+    connectionRequests: true,
+  }
+  const [prefs, setPrefs] = useState({ ...defaults, ...(nurse?.notificationPreferences || {}) })
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
+
+  const keys = ['highRiskAlerts', 'dailyReports', 'patientMessages', 'connectionRequests']
+
+  function savePreferences() {
+    setStatus('')
+    setError('')
+    api.updateNotificationPreferences(prefs)
+      .then((provider) => {
+        onNurseUpdate?.(provider)
+        setStatus('Preferences saved.')
+      })
+      .catch((err) => setError(err.message || 'Unable to save preferences.'))
+  }
+
   return (
     <div className="card" style={{ marginBottom: 20 }}>
       <div className="settings-title">Notification Preferences</div>
 
-      {prefToggles.map(({ label, sub, defaultOn }) => (
+      {prefToggles.map(({ label, sub, defaultOn }, index) => {
+        const key = keys[index] || label.replace(/\W+/g, '')
+        const on = prefs[key] ?? defaultOn
+        return (
         <div key={label} className="pref-row">
           <div>
             <div className="pref-label">{label}</div>
             <div className="pref-sub">{sub}</div>
           </div>
-          <Toggle defaultOn={defaultOn} />
+          <Toggle on={on} onChange={(next) => setPrefs((prev) => ({ ...prev, [key]: next }))} />
         </div>
-      ))}
+        )
+      })}
 
-      <button className="btn-save" style={{ marginTop: 16 }}>Save Preferences</button>
+      {error && <div style={{ color: 'var(--red)', fontSize: 12, marginTop: 8 }}>{error}</div>}
+      {status && <div style={{ color: 'var(--green)', fontSize: 12, marginTop: 8 }}>{status}</div>}
+      <button className="btn-save" style={{ marginTop: 16 }} onClick={savePreferences}>Save Preferences</button>
     </div>
   )
 }
@@ -146,16 +220,16 @@ function SignOutCard({ onLogout }) {
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function AccountSettingsPage({ onLogout, nurse }) {
+function AccountSettingsPage({ onLogout, nurse, onNurseUpdate }) {
   return (
     <div>
       <div className="settings-grid">
         <div>
-          <ProfileCard nurse={nurse} />
+          <ProfileCard nurse={nurse} onNurseUpdate={onNurseUpdate} />
           <SecurityCard />
         </div>
         <div>
-          <NotifPrefsCard />
+          <NotifPrefsCard nurse={nurse} onNurseUpdate={onNurseUpdate} />
           <ActivityCard />
           <SignOutCard onLogout={onLogout} />
         </div>

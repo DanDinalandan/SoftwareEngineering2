@@ -14,12 +14,17 @@ const typeIcon = {
   connection_accepted: require('../../../assets/icons/accepted.png'),
   connection_rejected: require('../../../assets/icons/rejected.png'),
   connection_removed: require('../../../assets/icons/rejected.png'),
+  provider_connection_request: require('../../../assets/icons/alerts.png'),
+  provider_connection_accepted: require('../../../assets/icons/accepted.png'),
+  provider_connection_rejected: require('../../../assets/icons/rejected.png'),
+  provider_connection_removed: require('../../../assets/icons/rejected.png'),
+  provider_message: require('../../../assets/icons/report.png'),
   high_risk: require('../../../assets/icons/warning.png'),
   vaped: require('../../../assets/icons/broken-heart.png'),
 };
 
 export default function VapeUserNotificationsScreen({ navigation }) {
-  const { getNotifications, markAllRead, getUnreadCount, respondToRequest } = useAuth();
+  const { getNotifications, markAllRead, getUnreadCount, respondToRequest, respondToProviderRequest } = useAuth();
   const notifications = getNotifications();
   const unread = getUnreadCount();
 
@@ -79,6 +84,24 @@ export default function VapeUserNotificationsScreen({ navigation }) {
     }
   };
 
+  const handleProviderResponse = async (requestId, accept) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await respondToProviderRequest(requestId, accept);
+      setRespondedNotificationId(requestId);
+      if (accept) {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2500);
+      }
+    } catch (err) {
+      setError('Failed to respond to provider request. Please try again.');
+      console.error('Provider response error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -96,14 +119,14 @@ export default function VapeUserNotificationsScreen({ navigation }) {
             <Text style={{ fontSize: 32, marginBottom: 10 }}>🔔</Text>
             <Text style={styles.emptyTitle}>No notifications yet</Text>
             <Text style={styles.emptyText}>
-              You'll be notified when a peer supporter wants to connect.
+              You'll be notified when a peer supporter or provider wants to connect.
             </Text>
           </View>
         ) : (
           <>
             {notifications.map((n) => {
               // Hide notification if it was just responded to
-              if (respondedNotificationId === n.requestId) return null;
+              if (respondedNotificationId === n.requestId || respondedNotificationId === n.providerRequestId) return null;
               return (
                 <View
                   key={n.id}
@@ -128,6 +151,24 @@ export default function VapeUserNotificationsScreen({ navigation }) {
                           style={[styles.acceptBtn, loading && { opacity: 0.6 }]}
                           disabled={loading}
                           onPress={() => startAccept(n)}
+                        >
+                          <Text style={styles.acceptBtnText}>{loading ? '...' : 'Accept'}</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                    {n.type === 'provider_connection_request' && n.providerRequestId && (
+                      <View style={styles.reqBtns}>
+                        <TouchableOpacity
+                          style={[styles.declineBtn, loading && { opacity: 0.6 }]}
+                          disabled={loading}
+                          onPress={() => handleProviderResponse(n.providerRequestId, false)}
+                        >
+                          <Text style={styles.declineBtnText}>{loading ? '...' : 'Decline'}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.acceptBtn, loading && { opacity: 0.6 }]}
+                          disabled={loading}
+                          onPress={() => handleProviderResponse(n.providerRequestId, true)}
                         >
                           <Text style={styles.acceptBtnText}>{loading ? '...' : 'Accept'}</Text>
                         </TouchableOpacity>
@@ -231,7 +272,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
             <Text style={{ fontSize: 40, marginBottom: 10 }}>🎉</Text>
             <Text style={styles.modalTitle}>Connected!</Text>
             <Text style={styles.modalSub}>
-              Your peer supporter can now see your progress and support you.
+              Your supporter can now see your progress and support you.
             </Text>
           </View>
         </View>

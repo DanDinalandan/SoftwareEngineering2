@@ -19,7 +19,7 @@ connectionRoutes.post('/connections/request', authRequired, asyncHandler(async (
   if (!target) return res.status(404).json({ error: 'User not found.' });
   if (req.user.role === 'Peer' && target.role !== 'Vape User') return res.status(400).json({ error: 'You can only connect to Vape Users.' });
   if (req.user.role === 'Vape User' && target.role !== 'Peer') return res.status(400).json({ error: 'You can only connect to Peer Supporters.' });
-  if (req.user.connectedPeerUserId || req.user.connectedVapeUserId || target.connected_peer_user_id || target.connected_vape_user_id) {
+  if (req.user.connectedPeerUserId || req.user.connectedVapeUserId || req.user.connectedProviderId || target.connected_peer_user_id || target.connected_vape_user_id || target.connected_provider_id) {
     return res.status(409).json({ error: 'One of these users is already connected.' });
   }
 
@@ -47,6 +47,16 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
   if (request.status !== 'pending') return res.status(409).json({ error: 'Request is already resolved.' });
 
   const accept = Boolean(req.body.accept);
+  let fromUser = null;
+  if (accept) {
+    const { data, error: fromError } = await supabase.from('app_users').select('*').eq('id', request.from_user_id).single();
+    if (fromError) throw fromError;
+    fromUser = data;
+    const vapeUser = fromUser.role === 'Vape User' ? fromUser : req.userRow;
+    if (vapeUser.connected_provider_id) {
+      return res.status(409).json({ error: 'This vape user is already connected to a provider.' });
+    }
+  }
   const { error: statusError } = await supabase.from('connection_requests').update({ status: accept ? 'accepted' : 'rejected' }).eq('id', request.id);
   if (statusError) throw statusError;
 
@@ -65,8 +75,6 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
     return res.json({ accepted: false });
   }
 
-  const { data: fromUser, error: fromError } = await supabase.from('app_users').select('*').eq('id', request.from_user_id).single();
-  if (fromError) throw fromError;
   const peer = fromUser.role === 'Peer' ? fromUser : req.userRow;
   const vapeUser = fromUser.role === 'Vape User' ? fromUser : req.userRow;
 
@@ -93,6 +101,88 @@ connectionRoutes.patch('/connections/:requestId', authRequired, asyncHandler(asy
   res.json({ accepted: true });
 }));
 
+connectionRoutes.patch('/provider-connections/:requestId', authRequired, asyncHandler(async (req, res) => {
+  if (req.user.role !== 'Vape User') return res.status(403).json({ error: 'Only vape users can respond to provider requests.' });
+
+  const { data: request, error: requestError } = await supabase
+    .from('provider_patient_requests')
+    .select('*, provider:provider_id(*)')
+    .eq('id', req.params.requestId)
+    .eq('vape_user_id', req.user.id)
+    .single();
+  if (requestError || !request) return res.status(404).json({ error: 'Request not found.' });
+  if (request.status !== 'pending') return res.status(409).json({ error: 'Request is already resolved.' });
+
+  const accept = Boolean(req.body.accept);
+  const providerName = `${request.provider?.first_name || ''} ${request.provider?.last_name || ''}`.trim() || request.provider?.email || 'Provider';
+
+  if (!accept) {
+    const { error: rejectError } = await supabase
+      .from('provider_patient_requests')
+      .update({ status: 'rejected', updated_at: new Date().toISOString() })
+      .eq('id', request.id);
+    if (rejectError) throw rejectError;
+    await supabase.from('notifications').delete().eq('provider_request_id', request.id).eq('type', 'provider_connection_request');
+    await pushNotification({
+      toProviderId: request.provider_id,
+      fromUserId: req.user.id,
+      type: 'provider_connection_rejected',
+      title: 'Patient declined request',
+      message: `${req.user.firstName || req.user.username} declined your monitoring request.`,
+    });
+    return res.json({ accepted: false });
+  }
+
+  const { count: connectionCount, error: countError } = await supabase
+    .from('provider_patient_connections')
+    .select('vape_user_id', { count: 'exact', head: true })
+    .eq('provider_id', request.provider_id)
+    .eq('active', true);
+  if (countError) throw countError;
+  if ((connectionCount || 0) >= 10) return res.status(409).json({ error: 'This provider already has 10 connected vape users.' });
+
+  if (req.user.connectedPeerUserId || req.user.connectedProviderId) {
+    return res.status(409).json({ error: 'You already have a peer supporter or provider.' });
+  }
+
+  const { data: existingProviderConnection, error: existingError } = await supabase
+    .from('provider_patient_connections')
+    .select('*')
+    .eq('vape_user_id', req.user.id)
+    .eq('active', true)
+    .maybeSingle();
+  if (existingError) throw existingError;
+  if (existingProviderConnection) return res.status(409).json({ error: 'You already have a provider.' });
+
+  const results = await Promise.all([
+    supabase
+      .from('provider_patient_requests')
+      .update({ status: 'accepted', updated_at: new Date().toISOString() })
+      .eq('id', request.id),
+    supabase
+      .from('provider_patient_connections')
+      .upsert({ provider_id: request.provider_id, vape_user_id: req.user.id, active: true, updated_at: new Date().toISOString() }, { onConflict: 'provider_id,vape_user_id' }),
+    supabase
+      .from('app_users')
+      .update({ connected_provider_id: request.provider_id, connected_provider_name: providerName, updated_at: new Date().toISOString() })
+      .eq('id', req.user.id),
+  ]);
+  const failed = results.find((result) => result.error);
+  if (failed) throw failed.error;
+
+  await supabase.from('notifications').delete().eq('provider_request_id', request.id).eq('type', 'provider_connection_request');
+
+  await pushNotification({
+    toProviderId: request.provider_id,
+    fromUserId: req.user.id,
+    type: 'provider_connection_accepted',
+    title: 'Patient accepted request',
+    message: `${req.user.firstName || req.user.username} accepted your monitoring request.`,
+  });
+
+  res.json({ accepted: true, providerName });
+}));
+
 connectionRoutes.delete('/connections', authRequired, asyncHandler(async (req, res) => {
   const partnerId = req.user.connectedPeerUserId || req.user.connectedVapeUserId;
   if (!partnerId) return res.json({ disconnected: false });
@@ -104,6 +194,8 @@ connectionRoutes.delete('/connections', authRequired, asyncHandler(async (req, r
     connected_vape_user_id: null,
     connected_peer_username: null,
     connected_vape_user_username: null,
+    connected_provider_id: null,
+    connected_provider_name: null,
     peer_relationship: null,
     progress_shared_with_peer: false,
     vape_user_relationship_label: null,

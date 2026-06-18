@@ -230,6 +230,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const respondToProviderRequest = async (requestId, accept) => {
+    try {
+      const data = await apiRequest(`/provider-connections/${requestId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ accept }),
+      });
+      setNotifications((prev) => prev.filter((n) => n.providerRequestId !== requestId));
+      await refreshUser();
+      await fetchNotifications();
+      return { success: true, ...data };
+    } catch (err) {
+      console.error('Error responding to provider request:', err);
+      throw err;
+    }
+  };
+
   const disconnect = async () => {
     if (!currentUser) return;
     try {
@@ -289,7 +305,9 @@ export function AuthProvider({ children }) {
         title: n.title,
         icon: n.icon,
         requestId: n.request_id, // Convert snake_case to camelCase
+        providerRequestId: n.provider_request_id,
         fromUserId: n.from_user_id,
+        fromProviderId: n.from_provider_id,
         fromDisplayName: n.from_display_name,
         read: n.read,
         timestamp: n.display_timestamp,
@@ -421,7 +439,7 @@ export function AuthProvider({ children }) {
       register, login, setRole, saveDetails,
       refreshUser, fetchNotifications,
       logMoodEntry, deleteLogEntry,
-      sendConnectionRequest, respondToRequest, disconnect,
+      sendConnectionRequest, respondToRequest, respondToProviderRequest, disconnect,
       sendMessage, getMessages,
       getNotifications, markAllRead, getUnreadCount,
       updateMoodDraft, clearMoodDraft,

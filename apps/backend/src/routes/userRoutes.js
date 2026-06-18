@@ -172,6 +172,30 @@ userRoutes.post('/mood', authRequired, asyncHandler(async (req, res) => {
     if (vaped) await pushNotification({ toUserId: updatedUser.connected_peer_user_id, type: 'vaped', message: `${displayName} reported vaping today. Consider reaching out.`, timezone: tz });
   }
 
+  if (updatedUser.connected_provider_id) {
+    const displayName = updatedUser.first_name || updatedUser.username;
+    if (relapseRisk > 60 || ['Awful', 'Bad'].includes(req.body.mood)) {
+      await pushNotification({
+        toProviderId: updatedUser.connected_provider_id,
+        fromUserId: updatedUser.id,
+        type: 'high_risk',
+        title: 'High relapse risk',
+        message: `${displayName} logged ${String(req.body.mood).toLowerCase()} mood with ${relapseRisk}% relapse risk.`,
+        timezone: tz,
+      });
+    }
+    if (vaped) {
+      await pushNotification({
+        toProviderId: updatedUser.connected_provider_id,
+        fromUserId: updatedUser.id,
+        type: 'vaped',
+        title: 'Patient reported vaping',
+        message: `${displayName} reported vaping today.`,
+        timezone: tz,
+      });
+    }
+  }
+
   const rewards = await syncRewardsForUser(req.user.id);
   const { data: latestLogs, error: logsError } = await supabase
     .from('mood_logs')
