@@ -21,6 +21,8 @@ once done you may change/replace the Lan IP with your computer LAN IP inside of 
 LAN_IP=192.168.100.210
 EXPO_PUBLIC_API_BASE_URL=http://192.168.100.210:3000' 
 
+# 3.5 Find your OpenAI API key at https://platform.openai.com/api-keys
+
 # 4 - to run everything 
  reassure that your DOCKER DESKTOP is running in the background or it will not run!
  run this command to start the project
