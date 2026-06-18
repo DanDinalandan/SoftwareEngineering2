@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '../services/api.js'
 
 const FILTERS = ['All', 'Stable', 'Monitor', 'Alert', 'Inactive']
 
@@ -36,7 +37,7 @@ function SummaryCards({ patientsList }) {
 }
 
 // ── Table row for one patient ────────────────────────
-function PatientRow({ patient, onViewClick }) {
+function PatientRow({ patient, onViewClick, onRemoveClick }) {
   const streakColor =
     patient.streak === 0          ? 'var(--red)'   :
     patient.status === 'monitor'  ? 'var(--amber)' :
@@ -82,15 +83,44 @@ function PatientRow({ patient, onViewClick }) {
 
       <td style={{ textAlign: 'right', paddingRight: 24 }}>
         <button className="btn-view" onClick={() => onViewClick(patient.id)}>View</button>
+        <button
+          className="btn-view"
+          style={{ marginLeft: 8, color: 'var(--red)', borderColor: 'var(--red)' }}
+          onClick={() => onRemoveClick(patient.id, patient.name)}
+        >
+          Remove
+        </button>
       </td>
     </tr>
   )
 }
 
 // ── Main Page Component ───────────────────────────────────────
-function PatientListPage({ patientsList = [], onViewPatient }) {
+function PatientListPage({ patientsList = [], onViewPatient, onRemovePatient }) {
   const [activeFilter, setActiveFilter] = useState('All')
   const [searchTerm,   setSearchTerm  ] = useState('')
+
+  const [isAdding, setIsAdding] = useState(false)
+  const [addEmail, setAddEmail] = useState('')
+  const [addStatus, setAddStatus] = useState({ loading: false, error: '', success: '' })
+
+  const [removingPatient, setRemovingPatient] = useState(null)
+
+  function handleAddPatient() {
+    if (!addEmail.trim()) return
+    setAddStatus({ loading: true, error: '', success: '' })
+    api.requestPatient(addEmail)
+      .then(() => {
+        setAddStatus({ loading: false, error: '', success: 'Connection request sent successfully.' })
+        setAddEmail('')
+        setTimeout(() => { setIsAdding(false); setAddStatus({ loading: false, error: '', success: '' }) }, 2000)
+      })
+      .catch(err => setAddStatus({ loading: false, error: err.message || 'Failed to send request.', success: '' }))
+  }
+
+  function handleRemoveClick(patientId, patientName) {
+    setRemovingPatient({ id: patientId, name: patientName })
+  }
 
   const filtered = patientsList.filter((p) => {
     const matchesFilter =
@@ -126,7 +156,59 @@ function PatientListPage({ patientsList = [], onViewPatient }) {
             {f}
           </button>
         ))}
+        <div style={{ flex: 1 }} />
+        <button className="btn-reply" onClick={() => setIsAdding(true)}>+ Add Patient</button>
       </div>
+
+      {/* Add Patient Modal */}
+      {isAdding && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>Connect to Patient</h2>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Enter the patient's email address to send a monitoring request. They must approve it in their app.</div>
+            <input
+              className="search-input"
+              style={{ margin: 0, width: '100%' }}
+              placeholder="patient@example.com"
+              value={addEmail}
+              onChange={(e) => setAddEmail(e.target.value)}
+            />
+            {addStatus.error && <div style={{ color: 'var(--red)', fontSize: 12 }}>{addStatus.error}</div>}
+            {addStatus.success && <div style={{ color: 'var(--green)', fontSize: 12 }}>{addStatus.success}</div>}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button className="btn-view" onClick={() => setIsAdding(false)} disabled={addStatus.loading}>Cancel</button>
+              <button className="btn-reply" onClick={handleAddPatient} disabled={!addEmail.trim() || addStatus.loading}>
+                {addStatus.loading ? 'Sending...' : 'Send Request'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Patient Modal */}
+      {removingPatient && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: 'var(--red)' }}>Remove Patient</h2>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              Are you sure you want to remove <strong>{removingPatient.name}</strong> from your monitoring list? This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button className="btn-view" onClick={() => setRemovingPatient(null)}>Cancel</button>
+              <button
+                className="btn-reply"
+                style={{ backgroundColor: 'var(--red)', borderColor: 'var(--red)', color: '#fff' }}
+                onClick={() => {
+                  onRemovePatient(removingPatient.id)
+                  setRemovingPatient(null)
+                }}
+              >
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Patient table */}
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -146,7 +228,7 @@ function PatientListPage({ patientsList = [], onViewPatient }) {
           </thead>
           <tbody>
             {filtered.map((p) => (
-              <PatientRow key={p.id} patient={p} onViewClick={onViewPatient} />
+              <PatientRow key={p.id} patient={p} onViewClick={onViewPatient} onRemoveClick={handleRemoveClick} />
             ))}
           </tbody>
         </table>

@@ -25,11 +25,13 @@ export const notificationFilters = [
 export const prefToggles = [
   { label: 'High relapse risk alerts', sub: 'Triggered when any patient score exceeds 70', defaultOn: true },
   { label: 'Missed daily logs', sub: 'Alert after 1 missed log', defaultOn: true },
-  { label: 'Milestone achievements', sub: 'At 7, 14, 30, 60, 90-day goals', defaultOn: true },
-  { label: 'Mood decline alerts', sub: '3 consecutive days of low mood', defaultOn: false },
   { label: 'Patient messages', sub: 'In-app messages from your patients', defaultOn: true },
   { label: 'Email digest', sub: 'Daily summary of all patient activity', defaultOn: false },
-  { label: 'New patient enrollment', sub: 'When a patient is assigned to you', defaultOn: true },
   { label: 'Relapse self-report', sub: 'Immediate alert when patient reports vaping', defaultOn: true },
+
+  // hidden
+  // { label: 'Milestone achievements', sub: 'At 7, 14, 30, 60, 90-day goals', defaultOn: true },
+  // { label: 'Mood decline alerts', sub: '3 consecutive days of low mood', defaultOn: false },
+  // { label: 'New patient enrollment', sub: 'When a patient is assigned to you', defaultOn: true },
 ];
 

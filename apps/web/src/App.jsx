@@ -63,6 +63,15 @@ export default function App() {
     setPatientsList([])
   }
 
+  function handleRemovePatient(patientId) {
+    api.removePatient(patientId)
+      .then(() => {
+        setPatientsList(prev => prev.filter(p => p.id !== patientId))
+        setActivePatientId(prev => (prev === patientId ? null : prev))
+      })
+      .catch((err) => console.error('Failed to remove patient:', err))
+  }
+
   // ── Auth Gate ──
   if (!nurse) {
     if (authScreen === 'signup') {
@@ -83,8 +92,8 @@ export default function App() {
   const PAGES = {
     dashboard:  <DashboardPage activePatientId={activePatientId} allPatients={patientsList} onSelectPatient={setActivePatientId} onOpenHistory={() => setActivePage('history')} />,
     statistics: <StatisticsPage activePatientId={activePatientId} />,
-    patients:   <PatientListPage patientsList={patientsList} onViewPatient={(id) => { setActivePatientId(id); setActivePage('statistics') }} />,
-    messages:   <MessagesPage onUnreadChange={setUnreadMsgCount} />,
+    patients:   <PatientListPage patientsList={patientsList} onViewPatient={(id) => { setActivePatientId(id); setActivePage('statistics') }} onRemovePatient={handleRemovePatient} />,
+    messages:   <MessagesPage onUnreadChange={setUnreadMsgCount} patientsList={patientsList} />,
     account:    <AccountSettingsPage onLogout={handleLogout} nurse={nurse} />,
     history:    <HistoryPage activePatientId={activePatientId} patientsList={patientsList} onBack={() => setActivePage('dashboard')} />
   }

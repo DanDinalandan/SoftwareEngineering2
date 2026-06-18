@@ -94,5 +94,35 @@ export const api = {
       body: JSON.stringify({ text: replyText }),
     });
   },
+
+  removePatient: async (patientId) => {
+    return request(`/provider/patients/${patientId}`, { method: 'DELETE' });
+  },
+
+  requestPatient: async (email) => {
+    return request('/provider/patients/request', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  composeMessage: async ({ patientId, subject, body }) => {
+    const data = await request('/provider/messages', {
+      method: 'POST',
+      body: JSON.stringify({ patientId, subject, body }),
+    });
+    return data.message;
+  },
+
+  updateMessage: async (messageId, { subject, body }) => {
+    return request(`/provider/messages/${messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ subject, body }),
+    });
+  },
+
+  deleteMessage: async (messageId) => {
+    return request(`/provider/messages/${messageId}`, { method: 'DELETE' });
+  },
 };
 
