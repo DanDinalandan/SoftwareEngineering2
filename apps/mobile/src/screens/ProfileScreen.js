@@ -49,7 +49,7 @@ export default function ProfileScreen({ navigation }) {
 
   const {
     firstName, lastName, role, streak = 0, totalPoints = 0,
-    moodLogs = [], lastRelapseRisk = 0, goal, birthday, gender, phone, daysLogged,
+    moodLogs = [], lastRelapseRisk = 0, goal, birthday, gender, phone,
   } = currentUser;
 
   const fullName = [firstName, lastName].filter(Boolean).join(' ');
@@ -57,8 +57,7 @@ export default function ProfileScreen({ navigation }) {
 
   const vapeFreeCount = moodLogs.filter((l) => !l.vaped).length;
   const vapedCount    = moodLogs.filter((l) => l.vaped).length;
-  const totalLogged   = daysLogged ?? moodLogs.length;
-  const savedLogs     = moodLogs.length;
+  const totalLogged   = moodLogs.length;
   const vapeFreeRate  = totalLogged > 0 ? Math.round((vapeFreeCount / totalLogged) * 100) : 0;
   const avgCraving    = totalLogged > 0
     ? (moodLogs.reduce((s, l) => s + (l.craving || 0), 0) / totalLogged).toFixed(1)
@@ -78,7 +77,7 @@ export default function ProfileScreen({ navigation }) {
     : totalLogged > 0 ? 'Early progress'
     : 'No check-ins yet';
   const progressSummary = totalLogged > 0
-    ? `${vapeFreeCount} of ${savedLogs || totalLogged} recent check-ins were vape-free.`
+    ? `${vapeFreeCount} of ${totalLogged} check-ins were vape-free.`
     : 'Start logging to build your progress history.';
   const riskSummary = lastRelapseRisk > 0
     ? 'Based on your latest check-in.'

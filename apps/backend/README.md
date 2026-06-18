@@ -26,8 +26,6 @@ Fill in:
 - `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key, keep this server-only
 - `JWT_SECRET`: a long random string
 - `CLIENT_URL`: Expo dev URL or `*` during local testing
-- `OPENAI_API_KEY`: optional; when omitted, analytics recommendations use the local clinical rules fallback
-- `OPENAI_MODEL`: optional; defaults to `gpt-4o-mini`
 
 ## 3. Run locally
 
@@ -79,17 +77,6 @@ EXPO_PUBLIC_API_BASE_URL=http://192.168.1.20:3000
 - `POST /mood`
 - `GET /mood`
 - `DELETE /mood/:id`
-- `GET /analytics/dashboard`
-- `GET /analytics/weekly-report`
-- `POST /analytics/quote`
-
-## Analytics model behavior
-
-Dashboard and weekly-report recommendations use a hybrid prediction flow:
-
-- `naive_bayes` is used for cold start predictions from the seeded clinical cessation dataset.
-- `arm` association-rule mining is used after the user has at least 20 mood logs and the strongest personal rule meets the confidence threshold.
-- If ARM does not have enough support/confidence yet, the API keeps using Naive Bayes and returns the ARM attempt as fallback metadata.
 - `POST /connections/request`
 - `PATCH /connections/:requestId`
 - `DELETE /connections`

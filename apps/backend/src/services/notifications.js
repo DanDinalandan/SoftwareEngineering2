@@ -1,5 +1,4 @@
 import { supabase } from '../supabase.js';
-import { getDisplayTimestamp } from './time.js';
 
 export async function pushNotification(payload) {
   const { data, error } = await supabase
@@ -13,7 +12,7 @@ export async function pushNotification(payload) {
       request_id: payload.requestId || null,
       from_user_id: payload.fromUserId || null,
       from_display_name: payload.fromDisplayName || null,
-      display_timestamp: getDisplayTimestamp(payload.timezone || 'UTC'),
+      display_timestamp: new Date().toLocaleString(),
     })
     .select('*')
     .single();

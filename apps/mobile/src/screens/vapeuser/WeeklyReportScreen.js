@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import { apiRequest } from '../../services/api';
 import { colors, spacing, radius } from '../../theme';
-import { getLocalDateString } from '../../utils/time';
 
 const HOUR_LABELS = ['12am','2am','4am','6am','8am','10am','12pm','2pm','4pm','6pm','8pm','10pm'];
 
@@ -24,7 +22,7 @@ function getWeeklyData(moodLogs) {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now);
     d.setDate(d.getDate() - i);
-    const dateStr = getLocalDateString(d);
+    const dateStr = d.toISOString().split('T')[0];
     week.push(moodLogs.find((l) => l.date === dateStr) || null);
   }
   return week;
@@ -71,15 +69,6 @@ function generateRecommendations({ avgCraving, totalVapeMinutes, vapedDays, topT
 export default function WeeklyReportScreen({ navigation }) {
   const { currentUser } = useAuth();
   const moodLogs = currentUser?.moodLogs || [];
-  const [serverReport, setServerReport] = useState(null);
-
-  useEffect(() => {
-    let mounted = true;
-    apiRequest('/analytics/weekly-report')
-      .then((data) => mounted && setServerReport(data))
-      .catch((err) => console.error('Error fetching weekly report:', err));
-    return () => { mounted = false; };
-  }, [currentUser?.id, moodLogs.length]);
 
   const weekLogs = useMemo(() => getWeeklyData(moodLogs), [moodLogs]);
   const logged   = weekLogs.filter(Boolean);
@@ -107,10 +96,7 @@ export default function WeeklyReportScreen({ navigation }) {
   });
   const peakHour = Object.entries(hourCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
 
-  const serverRecommendations = serverReport?.recommendation?.recommendations || [];
-  const recs = serverReport?.ready && serverRecommendations.length
-    ? serverRecommendations.map((text) => ({ text }))
-    : generateRecommendations({ avgCraving: parseFloat(avgCraving), totalVapeMinutes, vapedDays, topTrigger, avgRisk, totalDays: logged.length });
+  const recs = generateRecommendations({ avgCraving: parseFloat(avgCraving), totalVapeMinutes, vapedDays, topTrigger, avgRisk, totalDays: logged.length });
 
   const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const maxCraving = Math.max(...weekLogs.map((l) => l?.craving || 0), 1);
@@ -203,19 +189,6 @@ export default function WeeklyReportScreen({ navigation }) {
 
         {/* Recommendations */}
         <Text style={styles.sectionLabel}>Recommendations for Next Week</Text>
-        {!serverReport?.ready && (
-          <View style={styles.notReadyCard}>
-            <Text style={styles.notReadyText}>
-              AI weekly recommendations unlock after 7 logged days. You have {serverReport?.loggedDays ?? logged.length}/7 this week.
-            </Text>
-          </View>
-        )}
-        {serverReport?.ready && serverReport?.recommendation?.summary ? (
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryTitle}>{serverReport.recommendation.title || 'AI Weekly Summary'}</Text>
-            <Text style={styles.summaryText}>{serverReport.recommendation.summary}</Text>
-          </View>
-        ) : null}
         {recs.map((r, i) => (
           <View key={i} style={styles.recCard}>
             <Text style={styles.recIcon}>{r.icon}</Text>
@@ -272,11 +245,6 @@ const styles = StyleSheet.create({
   recCard: { flexDirection: 'row', gap: 10, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 8, alignItems: 'flex-start' },
   recIcon: { fontSize: 20 },
   recText: { flex: 1, fontSize: 13, color: colors.bone, lineHeight: 19 },
-  notReadyCard: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 8 },
-  notReadyText: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
-  summaryCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lavender + '50', padding: 14, marginBottom: 8 },
-  summaryTitle: { fontSize: 14, fontWeight: '800', color: colors.text, marginBottom: 5 },
-  summaryText: { fontSize: 13, color: colors.bone, lineHeight: 19 },
   noteCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: colors.lavender },
   noteDate: { fontSize: 10, color: colors.textMuted, marginBottom: 4 },
   noteText: { fontSize: 13, color: colors.bone, fontStyle: 'italic', lineHeight: 19 },
