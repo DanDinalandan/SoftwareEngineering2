@@ -2,6 +2,9 @@ import { config } from '../config.js';
 import { supabase } from '../supabase.js';
 
 const moodScore = { Awful: 1, Bad: 2, Okay: 3, Good: 4, Great: 5 };
+const ARM_MIN_LOGS = 20;
+const ARM_MIN_SUPPORT = 3;
+const ARM_MIN_CONFIDENCE = 0.6;
 
 function normalizeTrigger(trigger = '') {
   const value = String(trigger).toLowerCase();
@@ -39,6 +42,166 @@ function countTriggers(logs) {
     if (moodTrigger) counts[moodTrigger] = (counts[moodTrigger] || 0) + 1;
   });
   return counts;
+}
+
+function cravingBucket(value) {
+  const craving = Number(value || 0);
+  if (craving >= 7) return 'high_craving';
+  if (craving >= 4) return 'moderate_craving';
+  return 'low_craving';
+}
+
+function riskBucket(value) {
+  const risk = Number(value || 0);
+  if (risk >= 70) return 'high_relapse_risk';
+  if (risk >= 40) return 'moderate_relapse_risk';
+  return 'low_relapse_risk';
+}
+
+function clinicalFeaturesFromRow(row) {
+  return [
+    `trigger:${rowPrimaryTrigger(row)}`,
+    `craving:${cravingBucket(Number(row.craving_intensity || 0) * 2)}`,
+    `relapse_history:${row.early_relapse_history === 'Yes' ? 'yes' : 'no'}`,
+    `motivation:${Number(row.quit_motivation || 0) >= 4 ? 'high' : 'low_mid'}`,
+    `stress_confidence:${Number(row.stress_confidence || 0) >= 4 ? 'high' : 'low_mid'}`,
+  ];
+}
+
+function userFeaturesFromLogs(logs = []) {
+  const pattern = buildUserPattern(logs);
+  const latest = logs[0] || {};
+  const topTrigger = pattern.topTriggers[0]?.trigger || normalizeTrigger(latest.triggers?.[0] || '');
+  return [
+    `trigger:${topTrigger || 'other'}`,
+    `craving:${cravingBucket(pattern.avgCraving || latest.craving)}`,
+    `relapse_history:${pattern.vapedDays > 0 ? 'yes' : 'no'}`,
+    `mood:${latest.mood || 'unknown'}`,
+  ];
+}
+
+function buildNaiveBayesPrediction({ clinicalRows = [], logs = [] }) {
+  const labels = [...new Set(clinicalRows.map((row) => row.main_relapse_reason).filter(Boolean))];
+  const features = userFeaturesFromLogs(logs);
+  const totalRows = clinicalRows.length || 1;
+  const vocabulary = new Set();
+  clinicalRows.forEach((row) => clinicalFeaturesFromRow(row).forEach((feature) => vocabulary.add(feature)));
+  features.forEach((feature) => vocabulary.add(feature));
+  const vocabularySize = Math.max(1, vocabulary.size);
+
+  const scores = labels.map((label) => {
+    const labelRows = clinicalRows.filter((row) => row.main_relapse_reason === label);
+    const labelFeatureCounts = {};
+    let featureTotal = 0;
+    labelRows.forEach((row) => {
+      clinicalFeaturesFromRow(row).forEach((feature) => {
+        labelFeatureCounts[feature] = (labelFeatureCounts[feature] || 0) + 1;
+        featureTotal += 1;
+      });
+    });
+
+    let logScore = Math.log((labelRows.length + 1) / (totalRows + labels.length));
+    features.forEach((feature) => {
+      logScore += Math.log(((labelFeatureCounts[feature] || 0) + 1) / (featureTotal + vocabularySize));
+    });
+    return { label, logScore, support: labelRows.length };
+  }).sort((a, b) => b.logScore - a.logScore);
+
+  if (!scores.length) {
+    return {
+      model: 'naive_bayes',
+      label: 'Other',
+      confidence: 0,
+      reason: 'No clinical dataset rows were available.',
+      features,
+    };
+  }
+
+  const maxScore = scores[0].logScore;
+  const normalized = scores.map((score) => ({ ...score, weight: Math.exp(score.logScore - maxScore) }));
+  const totalWeight = normalized.reduce((sum, score) => sum + score.weight, 0) || 1;
+  const best = normalized[0];
+
+  return {
+    model: 'naive_bayes',
+    label: best.label,
+    confidence: Number((best.weight / totalWeight).toFixed(2)),
+    reason: `Cold start prediction from ${totalRows} seeded clinical records.`,
+    features,
+    alternatives: normalized.slice(1, 4).map((score) => ({
+      label: score.label,
+      confidence: Number((score.weight / totalWeight).toFixed(2)),
+    })),
+  };
+}
+
+function logItems(log) {
+  const items = new Set();
+  (log.triggers || []).forEach((trigger) => items.add(`trigger:${normalizeTrigger(trigger)}`));
+  if (moodToClinicalTrigger(log.mood)) items.add(`trigger:${moodToClinicalTrigger(log.mood)}`);
+  items.add(`mood:${log.mood}`);
+  items.add(`craving:${cravingBucket(log.craving)}`);
+  items.add(`risk:${riskBucket(log.relapse_risk || log.relapseRisk)}`);
+  items.add(log.vaped ? 'outcome:vaped' : 'outcome:vape_free');
+  return [...items];
+}
+
+function buildArmPrediction(logs = []) {
+  const transactions = logs.map(logItems);
+  const antecedentCounts = {};
+  const ruleCounts = {};
+
+  transactions.forEach((items) => {
+    const outcomes = items.filter((item) => item.startsWith('outcome:') || item.startsWith('risk:'));
+    const antecedents = items.filter((item) => item.startsWith('trigger:') || item.startsWith('mood:') || item.startsWith('craving:'));
+    antecedents.forEach((antecedent) => {
+      antecedentCounts[antecedent] = (antecedentCounts[antecedent] || 0) + 1;
+      outcomes.forEach((outcome) => {
+        const key = `${antecedent}->${outcome}`;
+        ruleCounts[key] = (ruleCounts[key] || 0) + 1;
+      });
+    });
+  });
+
+  const rules = Object.entries(ruleCounts).map(([key, support]) => {
+    const [antecedent, consequent] = key.split('->');
+    const confidence = support / (antecedentCounts[antecedent] || 1);
+    return { antecedent, consequent, support, confidence };
+  }).filter((rule) => rule.support >= ARM_MIN_SUPPORT)
+    .sort((a, b) => (b.confidence - a.confidence) || (b.support - a.support));
+
+  const best = rules[0];
+  const confident = Boolean(best && best.confidence >= ARM_MIN_CONFIDENCE);
+  return {
+    model: 'arm',
+    label: best?.consequent?.replace(/^(outcome|risk):/, '') || 'insufficient_trend',
+    confidence: best ? Number(best.confidence.toFixed(2)) : 0,
+    support: best?.support || 0,
+    rule: best || null,
+    rules: rules.slice(0, 5).map((rule) => ({
+      ...rule,
+      confidence: Number(rule.confidence.toFixed(2)),
+    })),
+    confident,
+    reason: confident
+      ? `ARM selected because ${logs.length} user logs produced a rule with ${Math.round(best.confidence * 100)}% confidence.`
+      : `ARM needs at least ${ARM_MIN_LOGS} logs and a rule with ${Math.round(ARM_MIN_CONFIDENCE * 100)}% confidence.`,
+  };
+}
+
+function choosePrediction({ logs = [], clinicalRows = [] }) {
+  const arm = buildArmPrediction(logs.slice(0, 20));
+  const naiveBayes = buildNaiveBayesPrediction({ clinicalRows, logs });
+  const thresholds = {
+    armMinLogs: ARM_MIN_LOGS,
+    armMinSupport: ARM_MIN_SUPPORT,
+    armMinConfidence: ARM_MIN_CONFIDENCE,
+  };
+
+  if (logs.length >= ARM_MIN_LOGS && arm.confident) {
+    return { activeModel: 'arm', prediction: arm, fallbackPrediction: naiveBayes, thresholds };
+  }
+  return { activeModel: 'naive_bayes', prediction: naiveBayes, fallbackPrediction: arm, thresholds };
 }
 
 export function buildUserPattern(logs = []) {
@@ -100,9 +263,10 @@ export async function matchClinicalPatterns(logs = [], limit = 5) {
   };
 }
 
-function fallbackRecommendation({ user, pattern, clinicalMatches, weeklyLogs }) {
+function fallbackRecommendation({ user, pattern, clinicalMatches, weeklyLogs, modelDecision }) {
   const top = pattern.topTriggers[0]?.trigger || 'cravings';
   const match = clinicalMatches[0];
+  const prediction = modelDecision?.prediction;
   const recs = [];
   if (pattern.avgCraving >= 7) {
     recs.push('Your cravings are trending high. Plan a fast response for the first 10 minutes: water, movement, and messaging your support person.');
@@ -110,18 +274,21 @@ function fallbackRecommendation({ user, pattern, clinicalMatches, weeklyLogs }) 
   if (top === 'stress') recs.push('Stress is your strongest pattern. Use one repeatable stress script: pause, breathe for 60 seconds, leave the trigger area, then log the craving.');
   if (top === 'social') recs.push('Social pressure shows up in your data. Decide your refusal line before gatherings and keep a no-vape exit plan ready.');
   if (top === 'habit_boredom') recs.push('Habit or boredom is a common relapse reason in the clinical dataset. Replace the usual vape window with a short task that uses your hands.');
-  if (pattern.vapedDays > 0) recs.push('A slip is data, not failure. Compare the time and trigger of the slip with tomorrow’s plan and make the next check-in easier.');
+  if (pattern.vapedDays > 0) recs.push("A slip is data, not failure. Compare the time and trigger of the slip with tomorrow's plan and make the next check-in easier.");
+  if (prediction?.model === 'naive_bayes') recs.push(`Initial model prediction: watch for ${String(prediction.label).toLowerCase()} patterns while more personal logs are collected.`);
+  if (prediction?.model === 'arm' && prediction.rule) recs.push(`Your personal trend rule is ${prediction.rule.antecedent.replace(':', ' ')} -> ${prediction.rule.consequent.replace(':', ' ')}.`);
   if (match) recs.push(`Similar clinical records most often pointed to ${match.relapseReason}. Watch for that pattern this week.`);
   if (recs.length < 2) recs.push('Your week looks steady. Keep logging daily so the recommendations can become more personal.');
   return {
     title: 'Personalized Recommendation',
-    summary: `${user.first_name || user.username}, your current pattern is ${top.replace('_', ' ')} with average craving ${pattern.avgCraving}/10.`,
+    summary: `${user.first_name || user.username}, ${modelDecision?.activeModel === 'arm' ? 'your personal ARM trend' : 'the Naive Bayes cold-start model'} is guiding this prediction. Current pattern: ${top.replace('_', ' ')} with average craving ${pattern.avgCraving}/10.`,
     recommendations: recs.slice(0, 4),
     source: 'rules',
+    model: modelDecision?.activeModel || 'rules',
+    prediction,
     weeklyReady: weeklyLogs.length >= 7,
   };
 }
-
 async function getPromptTemplate(key) {
   const { data, error } = await supabase
     .from('ai_prompt_templates')
@@ -164,11 +331,20 @@ async function callOpenAI(prompt) {
 
 export async function buildRecommendations({ user, logs, type = 'dashboard' }) {
   const recentLogs = logs.slice(0, type === 'weekly_report' ? 7 : 20);
-  const { userPattern, matches } = await matchClinicalPatterns(logs.slice(0, 20));
+  const { data: clinicalRows, error: clinicalRowsError } = await supabase
+    .from('clinical_cessation_patterns')
+    .select('*')
+    .limit(1000);
+  if (clinicalRowsError) throw clinicalRowsError;
+
+  const userPattern = buildUserPattern(logs.slice(0, 20));
+  const { matches } = await matchClinicalPatterns(logs.slice(0, 20));
+  const modelDecision = choosePrediction({ logs, clinicalRows: clinicalRows || [] });
   const template = await getPromptTemplate(type);
   const payload = {
     user: { firstName: user.first_name, streak: user.streak, goal: user.goal },
     pattern: userPattern,
+    modelDecision,
     clinicalMatches: matches,
     recentLogs: recentLogs.map((log) => ({
       date: log.log_date,
@@ -182,6 +358,11 @@ export async function buildRecommendations({ user, logs, type = 'dashboard' }) {
     constraints: {
       weeklyReportRequiresSevenDays: type === 'weekly_report',
       compareUpToTwentyLogs: true,
+      coldStartModel: 'naive_bayes',
+      trendModel: 'arm',
+      armMinLogs: ARM_MIN_LOGS,
+      armMinSupport: ARM_MIN_SUPPORT,
+      armMinConfidence: ARM_MIN_CONFIDENCE,
     },
   };
 
@@ -197,8 +378,15 @@ export async function buildRecommendations({ user, logs, type = 'dashboard' }) {
       pattern: userPattern,
       clinicalMatches: matches,
       weeklyLogs: logs.slice(0, 7),
+      modelDecision,
     });
   }
+
+  const response = {
+    ...result,
+    model: result.model || modelDecision.activeModel,
+    prediction: result.prediction || modelDecision.prediction,
+  };
 
   const { data, error } = await supabase
     .from('ai_recommendations')
@@ -207,16 +395,15 @@ export async function buildRecommendations({ user, logs, type = 'dashboard' }) {
       recommendation_type: type,
       prompt_template_id: template?.id || null,
       clinical_match_ids: matches.map((match) => match.id),
-      source: result.source || (config.openaiApiKey ? 'openai' : 'rules'),
+      source: response.source || (config.openaiApiKey ? 'openai' : 'rules'),
       payload,
-      response: result,
+      response,
     })
     .select('*')
     .single();
   if (error) throw error;
-  return { ...result, id: data.id, pattern: userPattern, clinicalMatches: matches };
+  return { ...response, id: data.id, pattern: userPattern, modelDecision, clinicalMatches: matches };
 }
-
 export async function getDailyQuote(userId, localDate) {
   const { data: existing, error: existingError } = await supabase
     .from('user_daily_quotes')

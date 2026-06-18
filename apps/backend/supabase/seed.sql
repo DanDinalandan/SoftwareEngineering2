@@ -81,7 +81,7 @@ values
 -- Clinical cessation dataset, editable AI prompts, and daily motivation content.
 insert into public.ai_prompt_templates (template_key, description, prompt)
 values
-  ('dashboard', 'Dashboard recommendation prompt. Edit this row to change how AI creates short suggestions.', 'You are helping a vape cessation mobile app produce one dashboard suggestion. Use the user logs and clinical dataset matches below. Return JSON with keys: title, summary, recommendations (array of 2-4 short strings), source. Be supportive, specific, nonjudgmental, and do not provide medical diagnosis.
+  ('dashboard', 'Dashboard recommendation prompt. Edit this row to change how AI creates short suggestions.', 'You are helping a vape cessation mobile app produce one dashboard suggestion. Use modelDecision from the payload: naive_bayes is the cold-start model from the clinical dataset; arm is the personal-trend model used after enough confident user logs. Return JSON with keys: title, summary, recommendations (array of 2-4 short strings), source, model, prediction. Be supportive, specific, nonjudgmental, and do not provide medical diagnosis.
 
 {{payload}}'),
   ('weekly_report', 'Weekly report recommendation prompt. Edit this row to change how AI creates weekly advice.', 'You are helping a vape cessation mobile app produce a weekly report after at least seven logged days. Compare the user''s last 7 logs with up to 20 total logs and the clinical dataset matches. Return JSON with keys: title, summary, recommendations (array of 3-5 short action-oriented strings), source. Mention strongest trigger, craving pattern, and one next-week plan. Be concise and supportive.

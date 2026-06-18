@@ -39,6 +39,7 @@ analyticsRoutes.get('/analytics/dashboard', authRequired, asyncHandler(async (re
     quote,
     pattern: clinical.userPattern,
     clinicalMatches: clinical.matches,
+    prediction: recommendation?.modelDecision || recommendation?.prediction || null,
     recommendation,
   });
 }));
@@ -58,6 +59,7 @@ analyticsRoutes.get('/analytics/weekly-report', authRequired, asyncHandler(async
     comparedLogs: Math.min(logs.length, 20),
     moodLogs: recentSeven.map(toMoodLog),
     topTriggers: buildTopTriggers(recentSeven),
+    prediction: recommendation?.modelDecision || recommendation?.prediction || null,
     recommendation,
   });
 }));
