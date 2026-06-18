@@ -21,7 +21,7 @@ function NotificationsPanel({ isOpen, onClose, notifications = [] }) {
       {/* Header row */}
       <div className="np-header">
         <h2>Notifications</h2>
-        <button className="np-close" onClick={onClose}>✕</button>
+        <button className="np-close" onClick={onClose}>Close</button>
       </div>
 
       {/* Filter tabs */}

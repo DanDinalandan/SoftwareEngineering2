@@ -180,10 +180,11 @@ export default function SignUpScreen({ navigation }) {
       >
         <Text style={styles.title}>Create account</Text>
         <Text style={styles.subtitle}>Join thousands on the path to freedom</Text>
+        <Text style={styles.requiredNote}>Fields marked Required must be completed.</Text>
 
         {/* ── Email (fixed @gmail.com) ── */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Email</Text>
+          <Text style={styles.fieldLabel}>Email <Text style={styles.requiredText}>Required</Text></Text>
           <View style={[styles.emailRow, errors.gmailUser && styles.errBorder]}>
             <TextInput
               style={styles.emailInput}
@@ -209,7 +210,7 @@ export default function SignUpScreen({ navigation }) {
         {/* ── Username + suggestions ── */}
         <View style={styles.fieldGroup}>
           <View style={styles.labelRow}>
-            <Text style={styles.fieldLabel}>Username</Text>
+            <Text style={styles.fieldLabel}>Username <Text style={styles.requiredText}>Required</Text></Text>
             <Text style={styles.charCount}>{username.length}/20</Text>
           </View>
           <View style={[styles.inputBox, errors.username && styles.errBorder]}>
@@ -260,7 +261,7 @@ export default function SignUpScreen({ navigation }) {
 
         {/* ── Phone ── */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Phone Number</Text>
+          <Text style={styles.fieldLabel}>Phone Number <Text style={styles.requiredText}>Required</Text></Text>
           <View style={[styles.inputBox, errors.phone && styles.errBorder]}>
             <TextInput
               style={styles.inputText}
@@ -277,7 +278,7 @@ export default function SignUpScreen({ navigation }) {
 
         {/* ── Password + strength ── */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Password</Text>
+          <Text style={styles.fieldLabel}>Password <Text style={styles.requiredText}>Required</Text></Text>
           <View style={[styles.inputBox, errors.password && styles.errBorder]}>
             <TextInput
               style={styles.inputText}
@@ -342,7 +343,7 @@ export default function SignUpScreen({ navigation }) {
 
         {/* ── Confirm Password ── */}
         <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>Confirm Password</Text>
+          <Text style={styles.fieldLabel}>Confirm Password <Text style={styles.requiredText}>Required</Text></Text>
           <View style={[styles.inputBox, errors.confirmPassword && styles.errBorder]}>
             <TextInput
               style={styles.inputText}
@@ -391,14 +392,16 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   title: { fontSize: 28, fontWeight: '800', color: colors.text, marginBottom: 6 },
-  subtitle: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.xl },
+  subtitle: { fontSize: 14, color: colors.textMuted, marginBottom: spacing.sm },
+  requiredNote: { fontSize: 12, color: colors.text, fontWeight: '600', marginBottom: spacing.xl },
 
   // Field wrapper
   fieldGroup: { marginBottom: spacing.md },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 },
-  fieldLabel: { fontSize: 12, color: colors.lilacAsh, fontWeight: '600', letterSpacing: 0.3, marginBottom: 6 },
-  fieldHint: { fontSize: 11, color: colors.textMuted, marginTop: 5 },
-  charCount: { fontSize: 10, color: colors.textMuted },
+  fieldLabel: { fontSize: 12, color: colors.text, fontWeight: '800', letterSpacing: 0.3, marginBottom: 6 },
+  requiredText: { color: colors.danger, fontWeight: '800' },
+  fieldHint: { fontSize: 11, color: colors.text, marginTop: 5 },
+  charCount: { fontSize: 10, color: colors.text },
 
   // Email row (split input + suffix)
   emailRow: {
@@ -423,7 +426,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: colors.border,
   },
-  suffixText: { color: colors.lavender, fontSize: 13, fontWeight: '600' },
+  suffixText: { color: colors.frenchBlue, fontSize: 13, fontWeight: '700' },
 
   // Generic input box
   inputBox: {
@@ -445,7 +448,7 @@ const styles = StyleSheet.create({
 
   // Suggestions
   suggestBox: { marginTop: 10 },
-  suggestTitle: { fontSize: 11, color: colors.textMuted, marginBottom: 6, fontWeight: '500' },
+  suggestTitle: { fontSize: 11, color: colors.text, marginBottom: 6, fontWeight: '700' },
   suggestRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   suggestChip: {
     paddingHorizontal: 12,
@@ -459,7 +462,7 @@ const styles = StyleSheet.create({
     borderColor: colors.lavender,
     backgroundColor: colors.surface2,
   },
-  suggestText: { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
+  suggestText: { fontSize: 12, color: colors.text, fontWeight: '600' },
   suggestTextActive: { color: colors.lavender, fontWeight: '700' },
 
   // Password strength
@@ -474,7 +477,7 @@ const styles = StyleSheet.create({
     padding: 10,
     gap: 4,
   },
-  ruleItem: { fontSize: 11, lineHeight: 19 },
+  ruleItem: { fontSize: 11, lineHeight: 19, fontWeight: '600' },
 
   // Password match
   matchHint: { fontSize: 12, marginTop: 5, fontWeight: '600' },

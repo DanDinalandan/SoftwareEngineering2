@@ -77,6 +77,18 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const forgotPassword = async ({ identifier, phone, password }) => {
+    try {
+      const data = await apiRequest('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ identifier, phone, password }),
+      });
+      return { success: true, message: data.message };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   const setRole = async (role) => {
     if (!currentUser) return;
     try {
@@ -338,16 +350,50 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const updatePhone = async (phone) => {
+    if (!currentUser) return { success: false, error: 'Not logged in' };
+    try {
+      const data = await apiRequest('/user/phone', {
+        method: 'PATCH',
+        body: JSON.stringify({ phone }),
+      });
+      setCurrentUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: err.message };
+    }
+  };
+
   const update2FA = async (enabled, phone) => {
     if (!currentUser) return;
     try {
-      const data = await apiRequest('/auth/2fa', {
-        method: 'PATCH',
-        body: JSON.stringify({ enabled, phone }),
-      });
+      if (enabled) {
+        const data = await apiRequest('/auth/send-otp', {
+          method: 'POST',
+          body: JSON.stringify({ phone }),
+        });
+        return { success: true, devOtp: data.devOtp };
+      }
+      const data = await apiRequest('/auth/2fa', { method: 'DELETE' });
       setCurrentUser(data.user);
+      return { success: true, user: data.user };
     } catch (err) {
       console.error('Error updating 2FA:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
+  const verify2FA = async (otp) => {
+    if (!currentUser) return { success: false, error: 'Not logged in' };
+    try {
+      const data = await apiRequest('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ otp }),
+      });
+      setCurrentUser(data.user);
+      return { success: true, user: data.user };
+    } catch (err) {
+      return { success: false, error: err.message };
     }
   };
 
@@ -381,7 +427,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       currentUser, notifTick, moodDraft, notifications,
-      register, login, setRole, saveDetails,
+      register, login, forgotPassword, setRole, saveDetails,
       refreshUser, fetchNotifications,
       logMoodEntry, deleteLogEntry,
       sendConnectionRequest, respondToRequest, disconnect,
@@ -389,7 +435,7 @@ export function AuthProvider({ children }) {
       getNotifications, markAllRead, getUnreadCount,
       updateMoodDraft, clearMoodDraft,
       getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
-      setGoal, update2FA, resetProgress, deleteAccount,
+      setGoal, updatePhone, update2FA, verify2FA, resetProgress, deleteAccount,
       getRewardDefs, getUnlockedIds,
       logout,
     }}>

@@ -68,7 +68,6 @@ export default function SupportScreen({ navigation }) {
           </View>
 
           <View style={styles.infoCard}>
-            <Text style={{ fontSize: 20, marginBottom: 8 }}>💜</Text>
             <Text style={styles.infoTitle}>What is a Peer Supporter?</Text>
             <Text style={styles.infoText}>
               A peer supporter is someone you trust — a friend, family member, or partner —
@@ -154,7 +153,7 @@ export default function SupportScreen({ navigation }) {
 
           <View style={styles.chatBox}>
             {messages.length === 0 ? (
-              <Text style={styles.noMsgs}>No messages yet. Say hello! 👋</Text>
+              <Text style={styles.noMsgs}>No messages yet. Say hello.</Text>
             ) : (
               messages.map((msg) => {
                 const isMe = msg.fromUsername === currentUser.username;
@@ -191,7 +190,7 @@ export default function SupportScreen({ navigation }) {
             onPress={handleSend}
             disabled={!msgText.trim()}
           >
-            <Text style={styles.sendIcon}>➤</Text>
+            <Text style={styles.sendIcon}>Send</Text>
           </TouchableOpacity>
         </View>
 
@@ -225,7 +224,6 @@ export default function SupportScreen({ navigation }) {
         <Modal transparent visible={showDisconnected} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={[styles.modal, { alignItems: 'center' }]}>
-              <Text style={{ fontSize: 32, marginBottom: 8 }}>✓</Text>
               <Text style={styles.modalTitle}>Disconnected</Text>
             </View>
           </View>
@@ -342,10 +340,10 @@ const styles = StyleSheet.create({
     fontSize: 14, borderWidth: 1, borderColor: colors.border, maxHeight: 100,
   },
   sendBtn: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: colors.frenchBlue,
+    width: 58, height: 42, borderRadius: 21, backgroundColor: colors.frenchBlue,
     alignItems: 'center', justifyContent: 'center',
   },
-  sendIcon: { color: colors.porcelain, fontSize: 16 },
+  sendIcon: { color: colors.porcelain, fontSize: 12, fontWeight: '800' },
 
   // Modals
   modalOverlay: {

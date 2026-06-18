@@ -177,12 +177,6 @@ export default function GoalsScreen({ navigation }) {
               ))}
             </View>
 
-            <TouchableOpacity
-              style={styles.changeGoalBtn}
-              onPress={() => setShowDetail(null)}
-            >
-              <Text style={styles.changeGoalText}>Change goal</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.noGoalCard}>
@@ -196,7 +190,7 @@ export default function GoalsScreen({ navigation }) {
 
         {/* Preset list */}
         <Text style={styles.sectionLabel}>
-          {activeGoal ? 'Change goal' : 'Choose your difficulty'}
+          {activeGoal ? 'Choose a new difficulty' : 'Choose your difficulty'}
         </Text>
 
         {PRESETS.map((preset) => (
@@ -250,10 +244,7 @@ export default function GoalsScreen({ navigation }) {
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowDetail(null)}>
                     <Text style={styles.cancelBtnText}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.selectBtn, { backgroundColor: showDetail.color }]}
-                    onPress={() => handleSelectPreset(showDetail)}
-                  >
+                  <TouchableOpacity style={styles.selectBtn} onPress={() => handleSelectPreset(showDetail)}>
                     <Text style={styles.selectBtnText}>Select</Text>
                   </TouchableOpacity>
                 </View>
@@ -369,11 +360,6 @@ menuIconImg: {
   tipsWrap: { backgroundColor: colors.surface, borderRadius: radius.md, padding: 12, marginBottom: 14 },
   tipsTitle: { fontSize: 12, fontWeight: '700', color: colors.text, marginBottom: 6 },
   tipItem: { fontSize: 12, color: colors.textMuted, lineHeight: 20 },
-  changeGoalBtn: {
-    paddingVertical: 10, borderRadius: radius.sm, borderWidth: 1,
-    borderColor: colors.border, alignItems: 'center',
-  },
-  changeGoalText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   presetCard: {
     backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1,
     borderColor: colors.border, padding: 16, marginBottom: 10, overflow: 'hidden',
@@ -400,7 +386,7 @@ menuIconImg: {
   weeklyGoalText: { fontSize: 13, color: colors.textMuted, marginBottom: 20 },
   modalBtns: { flexDirection: 'row', gap: 10 },
   cancelBtn: { flex: 1, paddingVertical: 12, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
-  cancelBtnText: { color: colors.textMuted, fontWeight: '600' },
+  cancelBtnText: { color: colors.text, fontWeight: '700' },
   selectBtn: { flex: 1, paddingVertical: 12, borderRadius: radius.md, backgroundColor: colors.frenchBlue, alignItems: 'center' },
   selectBtnText: { color: colors.porcelain, fontWeight: '700' },
   customInput: {

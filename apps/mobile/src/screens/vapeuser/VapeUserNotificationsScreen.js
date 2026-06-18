@@ -92,7 +92,6 @@ export default function VapeUserNotificationsScreen({ navigation }) {
 
         {notifications.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={{ fontSize: 32, marginBottom: 10 }}>🔔</Text>
             <Text style={styles.emptyTitle}>No notifications yet</Text>
             <Text style={styles.emptyText}>
               You'll be notified when a peer supporter wants to connect.
@@ -138,7 +137,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
             })}
             {error && (
               <View style={[styles.notifCard, { backgroundColor: '#ff6b6b20', borderColor: '#ff6b6b' }]}>
-                <Text style={{ color: '#ff6b6b', fontWeight: '600', fontSize: 12 }}>⚠️ {error}</Text>
+                <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 12 }}>{error}</Text>
               </View>
             )}
           </>
@@ -192,7 +191,6 @@ export default function VapeUserNotificationsScreen({ navigation }) {
       <Modal transparent visible={showConfirmShare} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modal}>
-            <Text style={{ fontSize: 36, marginBottom: 10 }}>🔒</Text>
             <Text style={styles.modalTitle}>Share your progress?</Text>
             <Text style={styles.modalSub}>
               By accepting, your{' '}
@@ -227,7 +225,6 @@ export default function VapeUserNotificationsScreen({ navigation }) {
       <Modal transparent visible={showSuccess} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modal, { alignItems: 'center' }]}>
-            <Text style={{ fontSize: 40, marginBottom: 10 }}>🎉</Text>
             <Text style={styles.modalTitle}>Connected!</Text>
             <Text style={styles.modalSub}>
               Your peer supporter can now see your progress and support you.
@@ -311,5 +308,5 @@ const styles = StyleSheet.create({
     paddingVertical: 12, borderRadius: radius.md, borderWidth: 1,
     borderColor: colors.border, alignItems: 'center',
   },
-  cancelBtnText: { color: colors.textMuted, fontSize: 14, fontWeight: '500' },
+  cancelBtnText: { color: colors.text, fontSize: 14, fontWeight: '700' },
 });

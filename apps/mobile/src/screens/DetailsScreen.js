@@ -23,7 +23,7 @@ function sanitizeName(val) {
 }
 
 
-function formatBirthday(raw, prevRaw) {
+function formatBirthday(raw) {
   // Strip everything that isn't a digit
   const digits = raw.replace(/\D/g, '').slice(0, 8);
 
@@ -40,17 +40,6 @@ function formatBirthday(raw, prevRaw) {
     out = `${mm}/${dd}`;
   } else {
     out = `${mm}/${dd}/${yyyy}`;
-  }
-
-    const prevDigits = (prevRaw || '').replace(/\D/g, '');
-  if (digits.length === 6 && prevDigits.length < 6) {
-    const twoDigit = parseInt(digits.slice(4, 6), 10);
-    const currentYear = new Date().getFullYear();
-    const cutoff = currentYear - 18; 
-    const fullYear = twoDigit <= (currentYear - 2000 - 18)
-      ? 2000 + twoDigit
-      : 1900 + twoDigit;
-    out = `${mm}/${dd}/${fullYear}`;
   }
 
   return out;
@@ -93,7 +82,7 @@ export default function DetailsScreen({ navigation }) {
   };
 
   const handleBirthday = (raw) => {
-    const formatted = formatBirthday(raw, form.birthday);
+    const formatted = formatBirthday(raw);
     setField('birthday')(formatted);
   };
 

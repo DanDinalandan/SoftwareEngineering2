@@ -102,7 +102,7 @@ function VapingDetailsSection({
             </View>
             {!disabled && (
               <TouchableOpacity onPress={() => removeSession(idx)} style={vStyles.removeBtn}>
-                <Text style={vStyles.removeBtnText}>✕</Text>
+                <Text style={vStyles.removeBtnText}>Remove</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -220,7 +220,7 @@ const vStyles = StyleSheet.create({
   timeChipSub: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
   sessionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, padding: 10, marginBottom: 6 },
   sessionNum: { fontSize: 12, color: colors.lavender, fontWeight: '800', width: 20 },
-  sessionText: { fontSize: 12, color: colors.bone, fontWeight: '500' },
+  sessionText: { fontSize: 12, color: colors.text, fontWeight: '500' },
   sessionDevice: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
   removeBtn: { padding: 4 },
   removeBtnText: { fontSize: 14, color: colors.danger, fontWeight: '700' },
@@ -403,7 +403,7 @@ export default function MoodScreen({ navigation }) {
 
         {alreadyLogged && (
           <View style={styles.alreadyBanner}>
-            <Text style={styles.alreadyText}>✓ You've already logged today. See you tomorrow!</Text>
+            <Text style={styles.alreadyText}>You've already logged today. See you tomorrow!</Text>
           </View>
         )}
 
@@ -584,11 +584,11 @@ export default function MoodScreen({ navigation }) {
           <View style={styles.modal}>
             {lastResult && !lastResult.vaped ? (
               <>
-                <Text style={styles.modalIcon}>✦</Text>
+                <Text style={styles.modalIcon}>Done</Text>
                 <Text style={styles.modalTitle}>Entry Recorded!</Text>
                 <Text style={styles.modalSub}>+{lastResult?.pointsEarned || 0} points earned</Text>
                 {lastResult?.newStreak > 0 && (
-                  <Text style={styles.modalStreak}>🔥 {lastResult.newStreak} day streak!</Text>
+                  <Text style={styles.modalStreak}>{lastResult.newStreak} day streak!</Text>
                 )}
                 {lastResult?.relapseRisk > 60 && (
                   <Text style={styles.modalWarning}>
@@ -598,7 +598,6 @@ export default function MoodScreen({ navigation }) {
               </>
             ) : (
               <>
-                <Text style={{ fontSize: 40, marginBottom: 10 }}>💪</Text>
                 <Text style={styles.modalTitle}>Entry Recorded</Text>
                 <Text style={styles.modalSub}>Honesty is the first step. Keep going!</Text>
                 {lastResult?.relapseRisk > 60 && (
@@ -613,7 +612,7 @@ export default function MoodScreen({ navigation }) {
             {lastResult?.newlyUnlocked?.length > 0 && (
               <View style={styles.newRewardsWrap}>
                 <Text style={styles.newRewardsTitle}>
-                  🏅 Reward{lastResult.newlyUnlocked.length > 1 ? 's' : ''} Unlocked!
+                  Reward{lastResult.newlyUnlocked.length > 1 ? 's' : ''} Unlocked!
                 </Text>
                 {lastResult.newlyUnlocked.map((r) => (
                   <View key={r.id} style={styles.newRewardRow}>
@@ -687,7 +686,7 @@ const styles = StyleSheet.create({
 
   // Coping
   copingTitle: { fontSize: 12, fontWeight: '700', color: colors.text, marginBottom: 8 },
-  copingItem: { fontSize: 12, color: colors.bone, marginBottom: 4, lineHeight: 19 },
+  copingItem: { fontSize: 12, color: colors.text, marginBottom: 4, lineHeight: 19 },
 
   // Toggle
   toggleRow: { gap: 8, marginBottom: 12 },
@@ -706,7 +705,7 @@ const styles = StyleSheet.create({
   // Logged session rows
   sessionRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, padding: 10, marginBottom: 8 },
   sessionIcon: { fontSize: 16 },
-  sessionText: { flex: 1, fontSize: 12, color: colors.bone },
+  sessionText: { flex: 1, fontSize: 12, color: colors.text },
   removeBtn: { padding: 4 },
   removeBtnText: { fontSize: 14, color: colors.danger, fontWeight: '700' },
 
