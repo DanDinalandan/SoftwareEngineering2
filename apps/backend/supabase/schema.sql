@@ -14,6 +14,7 @@ create table if not exists public.app_users (
   age integer,
   gender text not null default '',
   phone text not null default '',
+  timezone text not null default 'UTC',
   streak integer not null default 0,
   days_logged integer not null default 0,
   total_points integer not null default 0,
@@ -60,10 +61,14 @@ create table if not exists public.mood_logs (
   craving integer not null check (craving between 0 and 10),
   vaped boolean not null default false,
   puffs_today integer not null default 0,
+  vape_minutes integer not null default 0,
+  vaped_sessions jsonb not null default '[]'::jsonb,
   vaped_hour text,
   comment text not null default '',
   relapse_risk integer not null check (relapse_risk between 0 and 100),
   points integer not null default 0,
+  device_timezone text not null default 'UTC',
+  local_logged_at text not null default '',
   display_timestamp text not null default '',
   created_at timestamptz not null default now(),
   unique (user_id, log_date)
@@ -88,6 +93,8 @@ create table if not exists public.messages (
   subject text,
   text text not null,
   read_by_provider boolean not null default false,
+  device_timezone text not null default 'UTC',
+  local_sent_at text not null default '',
   display_timestamp text not null default '',
   created_at timestamptz not null default now()
 );
@@ -109,6 +116,14 @@ create table if not exists public.notifications (
   display_timestamp text not null default '',
   created_at timestamptz not null default now()
 );
+
+alter table public.app_users add column if not exists timezone text not null default 'UTC';
+alter table public.mood_logs add column if not exists vape_minutes integer not null default 0;
+alter table public.mood_logs add column if not exists vaped_sessions jsonb not null default '[]'::jsonb;
+alter table public.mood_logs add column if not exists device_timezone text not null default 'UTC';
+alter table public.mood_logs add column if not exists local_logged_at text not null default '';
+alter table public.messages add column if not exists device_timezone text not null default 'UTC';
+alter table public.messages add column if not exists local_sent_at text not null default '';
 
 alter table public.notifications add column if not exists title text;
 alter table public.notifications add column if not exists icon text;
@@ -171,6 +186,64 @@ create table if not exists public.provider_messages (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.clinical_cessation_patterns (
+  id integer primary key,
+  age_range text not null default '',
+  gender text not null default '',
+  years_smoking text not null default '',
+  time_to_first_smoke text not null default '',
+  past_quit_attempts text not null default '',
+  longest_smoke_free_period text not null default '',
+  stress_anxiety_trigger integer not null check (stress_anxiety_trigger between 1 and 5),
+  emotion_management integer not null check (emotion_management between 1 and 5),
+  concentration_difficulty integer not null check (concentration_difficulty between 1 and 5),
+  craving_intensity integer not null check (craving_intensity between 1 and 5),
+  social_pressure_trigger integer not null check (social_pressure_trigger between 1 and 5),
+  stress_confidence integer not null check (stress_confidence between 1 and 5),
+  quit_motivation integer not null check (quit_motivation between 1 and 5),
+  early_relapse_history text not null default '',
+  main_relapse_reason text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.ai_prompt_templates (
+  id uuid primary key default gen_random_uuid(),
+  template_key text not null unique,
+  description text not null default '',
+  prompt text not null,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.ai_recommendations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  recommendation_type text not null check (recommendation_type in ('dashboard', 'weekly_report')),
+  prompt_template_id uuid references public.ai_prompt_templates(id) on delete set null,
+  clinical_match_ids integer[] not null default '{}',
+  source text not null default 'rules',
+  payload jsonb not null default '{}'::jsonb,
+  response jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.motivational_quotes (
+  id uuid primary key default gen_random_uuid(),
+  quote text not null unique,
+  category text not null default 'general',
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.user_daily_quotes (
+  user_id uuid not null references public.app_users(id) on delete cascade,
+  quote_date date not null,
+  quote_id uuid not null references public.motivational_quotes(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (user_id, quote_date)
+);
+
 create table if not exists public.otp_codes (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.app_users(id) on delete cascade,
@@ -188,6 +261,9 @@ create index if not exists otp_codes_user_created_idx on public.otp_codes (user_
 create index if not exists provider_messages_provider_created_idx on public.provider_messages (provider_id, created_at desc);
 create index if not exists user_reward_goals_user_idx on public.user_reward_goals (user_id);
 create index if not exists reward_goals_active_sort_idx on public.reward_goals (active, sort_order);
+create index if not exists clinical_patterns_relapse_reason_idx on public.clinical_cessation_patterns (main_relapse_reason);
+create index if not exists ai_recommendations_user_created_idx on public.ai_recommendations (user_id, created_at desc);
+create index if not exists ai_prompt_templates_key_idx on public.ai_prompt_templates (template_key, active);
 
 alter table public.app_users enable row level security;
 alter table public.providers enable row level security;
@@ -200,3 +276,8 @@ alter table public.reward_goals enable row level security;
 alter table public.user_reward_goals enable row level security;
 alter table public.otp_codes enable row level security;
 alter table public.provider_messages enable row level security;
+alter table public.clinical_cessation_patterns enable row level security;
+alter table public.ai_prompt_templates enable row level security;
+alter table public.ai_recommendations enable row level security;
+alter table public.motivational_quotes enable row level security;
+alter table public.user_daily_quotes enable row level security;

@@ -7,6 +7,7 @@ import Slider from '@react-native-community/slider';
 import { Card, BottomNav, PrimaryButton } from '../components';
 import { useAuth } from '../context/AuthContext';
 import { colors, spacing, radius } from '../theme';
+import { getLocalDateString } from '../utils/time';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const MOODS = [
@@ -261,7 +262,7 @@ function getLast7Days(moodLogs) {
   for (let i = 6; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(d);
     const label   = i === 0 ? 'Today' : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
     const log     = moodLogs.find((l) => l.date === dateStr);
     days.push({ label, craving: log?.craving ?? 0, isToday: i === 0, isHigh: (log?.craving ?? 0) >= 7 });
@@ -283,7 +284,7 @@ export default function MoodScreen({ navigation }) {
   const unreadCount   = getUnreadCount();
   const moodLogs      = currentUser?.moodLogs || [];
   const streak        = currentUser?.streak   || 0;
-  const todayStr      = new Date().toISOString().split('T')[0];
+  const todayStr      = getLocalDateString();
   const alreadyLogged = moodLogs.some((l) => l.date === todayStr);
 
   // Form state

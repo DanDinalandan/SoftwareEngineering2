@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 import { config } from './config.js';
+import { analyticsRoutes } from './routes/analyticsRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import { connectionRoutes } from './routes/connectionRoutes.js';
 import { messageRoutes } from './routes/messageRoutes.js';
@@ -24,6 +25,7 @@ export function createApp() {
   app.use(messageRoutes);
   app.use(notificationRoutes);
   app.use(rewardRoutes);
+  app.use(analyticsRoutes);
 
   app.use((req, res) => {
     res.status(404).json({ error: `Route not found: ${req.method} ${req.path}` });
