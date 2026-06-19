@@ -6,6 +6,7 @@ import {
 import Slider from '@react-native-community/slider';
 import { Card, BottomNav, PrimaryButton } from '../components';
 import { useAuth } from '../context/AuthContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../theme';
 import { getLocalDateString } from '../utils/time';
 
@@ -281,6 +282,7 @@ export default function MoodScreen({ navigation }) {
     currentUser, logMoodEntry, getUnreadCount,
     moodDraft, updateMoodDraft, clearMoodDraft,
   } = useAuth();
+  const { refreshControl } = usePullToRefresh();
   const unreadCount   = getUnreadCount();
   const moodLogs      = currentUser?.moodLogs || [];
   const streak        = currentUser?.streak   || 0;
@@ -394,7 +396,7 @@ export default function MoodScreen({ navigation }) {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
 
         {/* Header */}
         <View style={styles.hdr}>

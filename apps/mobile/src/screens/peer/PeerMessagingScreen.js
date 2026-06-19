@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../../theme';
 import PeerBottomNav from './PeerBottomNav';
 
@@ -13,6 +14,9 @@ export default function PeerMessagingScreen({ navigation }) {
   const unread = getUnreadCount();
   const [text, setText] = useState('');
   const scrollRef = useRef(null);
+  const { refreshControl } = usePullToRefresh(() => {
+    if (connected) getMessages(connected.username);
+  });
 
   const messages = connected ? getMessages(connected.username) : [];
 
@@ -26,10 +30,10 @@ export default function PeerMessagingScreen({ navigation }) {
   if (!connected) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.emptyWrap}>
+        <ScrollView contentContainerStyle={styles.emptyWrap} refreshControl={refreshControl}>
           <Text style={styles.emptyTitle}>No connection yet</Text>
           <Text style={styles.emptyText}>Connect with a Vape User first to start messaging.</Text>
-        </View>
+        </ScrollView>
         <PeerBottomNav active="Messaging" navigation={navigation} unread={unread} />
       </SafeAreaView>
     );
@@ -54,6 +58,7 @@ export default function PeerMessagingScreen({ navigation }) {
           contentContainerStyle={styles.messageList}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           showsVerticalScrollIndicator={false}
+          refreshControl={refreshControl}
         >
           {messages.length === 0 ? (
             <Text style={styles.noMessages}>No messages yet. Say hello.</Text>
@@ -109,7 +114,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, backgroundColor: colors.input, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: colors.text, fontSize: 14, borderWidth: 1, borderColor: colors.border, maxHeight: 100 },
   sendBtn: { width: 58, height: 42, borderRadius: 21, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center' },
   sendIcon: { color: colors.porcelain, fontSize: 12, fontWeight: '800' },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  emptyWrap: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 },
   emptyText: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 21 },
 });

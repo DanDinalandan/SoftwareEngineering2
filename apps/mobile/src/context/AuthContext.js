@@ -342,6 +342,16 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const clearAllNotifications = async () => {
+    try {
+      await apiRequest('/notifications', { method: 'DELETE' });
+      setNotifications([]);
+      setNotifTick((n) => n + 1);
+    } catch (err) {
+      console.error('Error clearing notifications:', err);
+    }
+  };
+
   const getUnreadCount = () => notifications.filter((n) => !n.read).length;
 
   const updateMoodDraft = (patch) => {
@@ -487,7 +497,7 @@ export function AuthProvider({ children }) {
       logMoodEntry, deleteLogEntry,
       sendConnectionRequest, respondToRequest, respondToProviderRequest, disconnect,
       sendMessage, getMessages,
-      getNotifications, markAllRead, getUnreadCount,
+      getNotifications, markAllRead, clearAllNotifications, getUnreadCount,
       updateMoodDraft, clearMoodDraft,
       getConnectedVapeUser, getConnectedPeer, getPendingRequestsForMe,
       setGoal, update2FA, resetProgress, deleteAccount,

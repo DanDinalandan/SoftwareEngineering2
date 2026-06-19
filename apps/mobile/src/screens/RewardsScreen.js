@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../theme';
 
 const rewardIcons = {
@@ -31,6 +32,7 @@ export default function RewardsScreen({ navigation }) {
   const streak = currentUser?.streak || 0;
   const rewards = getRewardDefs();
   const [activeFilter, setActiveFilter] = useState('All');
+  const { refreshControl } = usePullToRefresh(fetchRewards);
 
   useEffect(() => {
     fetchRewards();
@@ -44,7 +46,7 @@ export default function RewardsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>Rewards</Text>
         </View>

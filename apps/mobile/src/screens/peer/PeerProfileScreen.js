@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, Modal, Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../../theme';
 import PeerBottomNav from './PeerBottomNav';
 
@@ -11,6 +12,7 @@ export default function PeerProfileScreen({ navigation }) {
   const { currentUser, getConnectedVapeUser, sendConnectionRequest, disconnect, logout, getUnreadCount } = useAuth();
   const connected = getConnectedVapeUser();
   const unread = getUnreadCount();
+  const { refreshControl } = usePullToRefresh();
 
   const [searchUsername, setSearchUsername] = useState('');
   const [searchResult, setSearchResult] = useState(null); // { success, error }
@@ -46,7 +48,7 @@ export default function PeerProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <Text style={styles.title}>Profile</Text>
 
         {/* Avatar */}

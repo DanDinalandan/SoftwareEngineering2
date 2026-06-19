@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../../theme';
 import PeerBottomNav from './PeerBottomNav';
 
@@ -19,6 +20,7 @@ export default function PeerDashboardScreen({ navigation }) {
   const pendingRequests = getPendingRequestsForMe();
   const unread = getUnreadCount();
   const firstName = currentUser?.firstName || currentUser?.username || 'Supporter';
+  const { refreshControl } = usePullToRefresh(fetchConnectedVapeUser);
 
   useEffect(() => {
     fetchConnectedVapeUser();
@@ -26,7 +28,7 @@ export default function PeerDashboardScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         {/* Header */}
         <View style={styles.headerRow}>
           <View>

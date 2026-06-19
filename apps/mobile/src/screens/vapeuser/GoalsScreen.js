@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, Modal, TextInput, Alert, Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { BottomNav } from '../../components';
 import { colors, spacing, radius } from '../../theme';
 
@@ -71,6 +72,7 @@ export default function GoalsScreen({ navigation }) {
   const { currentUser, setGoal, getUnreadCount } = useAuth();
   const unreadCount = getUnreadCount();
   const activeGoal = currentUser?.goal || null;
+  const { refreshControl } = usePullToRefresh();
 
   const [showDetail, setShowDetail] = useState(null); // preset object
   const [customPuffs, setCustomPuffs] = useState('');
@@ -127,7 +129,7 @@ export default function GoalsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <Text style={styles.title}>My Goal</Text>
 
         {/* Active goal banner */}

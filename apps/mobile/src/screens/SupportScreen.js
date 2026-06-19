@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { BottomNav } from '../components';
 import { useAuth } from '../context/AuthContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../theme';
 
 export default function SupportScreen({ navigation }) {
@@ -20,6 +21,9 @@ export default function SupportScreen({ navigation }) {
   const [showDisconnect, setShowDisconnect] = useState(false);
   const [showDisconnected, setShowDisconnected] = useState(false);
   const scrollRef = useRef(null);
+  const { refreshControl } = usePullToRefresh(() => {
+    if (peer) getMessages(peer.username);
+  });
 
   const messages = peer ? getMessages(peer.username) : [];
   const relationship = currentUser?.peerRelationship || 'Peer';
@@ -49,7 +53,7 @@ export default function SupportScreen({ navigation }) {
   if (!peer) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
           <Text style={styles.title}>Support</Text>
 
           <View style={styles.noPeerCard}>
@@ -97,6 +101,7 @@ export default function SupportScreen({ navigation }) {
           ref={scrollRef}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
+          refreshControl={refreshControl}
           onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
         >
           <Text style={styles.title}>Support</Text>

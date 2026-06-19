@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { apiRequest } from '../../services/api';
 import { colors, spacing, radius } from '../../theme';
 import { getLocalDateString } from '../../utils/time';
@@ -73,13 +74,20 @@ export default function WeeklyReportScreen({ navigation }) {
   const moodLogs = currentUser?.moodLogs || [];
   const [serverReport, setServerReport] = useState(null);
 
+  const fetchWeeklyReport = useCallback(async () => {
+    const data = await apiRequest('/analytics/weekly-report');
+    setServerReport(data);
+    return data;
+  }, []);
+  const { refreshControl } = usePullToRefresh(fetchWeeklyReport);
+
   useEffect(() => {
     let mounted = true;
-    apiRequest('/analytics/weekly-report')
+    fetchWeeklyReport()
       .then((data) => mounted && setServerReport(data))
       .catch((err) => console.error('Error fetching weekly report:', err));
     return () => { mounted = false; };
-  }, [currentUser?.id, moodLogs.length]);
+  }, [currentUser?.id, fetchWeeklyReport, moodLogs.length]);
 
   const weekLogs = useMemo(() => getWeeklyData(moodLogs), [moodLogs]);
   const logged   = weekLogs.filter(Boolean);
@@ -117,7 +125,7 @@ export default function WeeklyReportScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.back}>‹</Text>

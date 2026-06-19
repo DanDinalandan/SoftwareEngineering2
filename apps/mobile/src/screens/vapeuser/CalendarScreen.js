@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, Modal, Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { BottomNav } from '../../components';
 import { colors, spacing, radius } from '../../theme';
 
@@ -27,6 +28,7 @@ function buildCalendar(year, month) {
 
 export default function CalendarScreen({ navigation }) {
   const { currentUser, deleteLogEntry } = useAuth();
+  const { refreshControl } = usePullToRefresh();
   const moodLogs = currentUser?.moodLogs || [];
 
   const today = new Date();
@@ -69,7 +71,7 @@ export default function CalendarScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backArrow}>‹</Text>

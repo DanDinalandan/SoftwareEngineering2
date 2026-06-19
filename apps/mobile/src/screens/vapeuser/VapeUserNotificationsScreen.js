@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, Modal, Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { BottomNav } from '../../components';
 import { colors, spacing, radius } from '../../theme';
 
@@ -24,15 +25,17 @@ const typeIcon = {
 };
 
 export default function VapeUserNotificationsScreen({ navigation }) {
-  const { currentUser, getNotifications, fetchNotifications, markAllRead, getUnreadCount, respondToRequest, respondToProviderRequest } = useAuth();
+  const { currentUser, getNotifications, fetchNotifications, markAllRead, clearAllNotifications, getUnreadCount, respondToRequest, respondToProviderRequest } = useAuth();
   const notifications = getNotifications();
   const unread = getUnreadCount();
+  const { refreshControl } = usePullToRefresh(fetchNotifications);
 
   // State for accept flow
   const [pendingAccept, setPendingAccept] = useState(null); // { requestId, fromDisplayName }
   const [selectedRelationship, setSelectedRelationship] = useState(null);
   const [showConfirmShare, setShowConfirmShare] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successKind, setSuccessKind] = useState('peer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [respondedNotificationId, setRespondedNotificationId] = useState(null);
@@ -96,6 +99,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
       setShowConfirmShare(false);
       setPendingAccept(null);
       setSelectedRelationship(null);
+      setSuccessKind('peer');
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2500);
     } catch (err) {
@@ -127,6 +131,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
       await respondToProviderRequest(requestId, accept);
       setRespondedNotificationId(requestId);
       if (accept) {
+        setSuccessKind('provider');
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2500);
       }
@@ -138,15 +143,26 @@ export default function VapeUserNotificationsScreen({ navigation }) {
     }
   };
 
+  const handleClearAll = async () => {
+    await clearAllNotifications?.();
+    setRespondedNotificationId(null);
+    setError(null);
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unread > 0 && (
             <View style={styles.unreadBadge}>
               <Text style={styles.unreadText}>{unread} new</Text>
             </View>
+          )}
+          {notifications.length > 0 && (
+            <TouchableOpacity style={styles.clearBtn} onPress={handleClearAll} activeOpacity={0.8}>
+              <Text style={styles.clearBtnText}>Clear all</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -165,7 +181,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
           <>
             {notifications.map((n) => {
               // Hide notification if it was just responded to
-              if (respondedNotificationId === n.requestId || respondedNotificationId === n.providerRequestId) return null;
+              if (respondedNotificationId && (respondedNotificationId === n.requestId || respondedNotificationId === n.providerRequestId)) return null;
               return (
                 <View
                   key={n.id}
@@ -309,7 +325,9 @@ export default function VapeUserNotificationsScreen({ navigation }) {
           <View style={[styles.modal, { alignItems: 'center' }]}>
             <Text style={styles.modalTitle}>Connected!</Text>
             <Text style={styles.modalSub}>
-              Your supporter can now see your progress and support you.
+              {successKind === 'provider'
+                ? 'Your nurse or clinic can now monitor your progress and support your goals.'
+                : 'Your peer supporter can now see your progress and support you.'}
             </Text>
           </View>
         </View>
@@ -333,6 +351,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10, paddingVertical: 3,
   },
   unreadText: { fontSize: 12, color: colors.lavender, fontWeight: '700' },
+  clearBtn: {
+    marginLeft: 'auto', borderRadius: radius.md, borderWidth: 1,
+    borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 7,
+  },
+  clearBtnText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   emptyCard: {
     alignItems: 'center', padding: 40, backgroundColor: colors.card,
     borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border,

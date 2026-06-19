@@ -1,36 +1,50 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, SafeAreaView, TouchableOpacity, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../../theme';
 import PeerBottomNav from './PeerBottomNav';
 
 const typeIcon = { high_risk: require('../../../assets/icons/warning.png'), vaped: require('../../../assets/icons/broken-heart.png'), connection_request: require('../../../assets/icons/alerts.png'), connection_accepted: require('../../../assets/icons/accepted.png'), connection_removed: require('../../../assets/icons/rejected.png') };
 
 export default function PeerNotificationsScreen({ navigation }) {
-  const { getNotifications, fetchNotifications, markAllRead, getUnreadCount, respondToRequest } = useAuth();
+  const { getNotifications, fetchNotifications, markAllRead, clearAllNotifications, getUnreadCount, respondToRequest } = useAuth();
   const notifications = getNotifications();
   const unread = getUnreadCount();
+  const { refreshControl } = usePullToRefresh(fetchNotifications);
 
   useEffect(() => {
     let mounted = true;
     const loadNotifications = async () => {
       await fetchNotifications?.();
-      if (mounted) await markAllRead();
     };
     loadNotifications();
-    const unsubscribe = navigation.addListener('focus', loadNotifications);
+    const unsubscribeFocus = navigation.addListener('focus', loadNotifications);
+    const unsubscribeBlur = navigation.addListener('blur', () => {
+      if (mounted) markAllRead?.();
+    });
     return () => {
       mounted = false;
-      unsubscribe();
+      unsubscribeFocus();
+      unsubscribeBlur();
     };
   }, [navigation]);
 
+  const handleClearAll = async () => {
+    await clearAllNotifications?.();
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         <View style={styles.header}>
           <Text style={styles.title}>Notifications</Text>
           {unread > 0 && <View style={styles.unreadBadge}><Text style={styles.unreadText}>{unread} new</Text></View>}
+          {notifications.length > 0 && (
+            <TouchableOpacity style={styles.clearBtn} onPress={handleClearAll} activeOpacity={0.8}>
+              <Text style={styles.clearBtnText}>Clear all</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {notifications.length === 0 ? (
@@ -71,6 +85,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '800', color: colors.text },
   unreadBadge: { backgroundColor: colors.lavender + '30', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3 },
   unreadText: { fontSize: 12, color: colors.lavender, fontWeight: '700' },
+  clearBtn: { marginLeft: 'auto', borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 7 },
+  clearBtnText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   emptyCard: { alignItems: 'center', padding: 40, backgroundColor: colors.card, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 6 },
   emptyText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },

@@ -4,10 +4,12 @@ import {
   StyleSheet, SafeAreaView, Modal, Switch, Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { colors, spacing, radius } from '../../theme';
 
 export default function SecurityScreen({ navigation }) {
   const { currentUser, updatePhone, update2FA, verify2FA, resetProgress, deleteAccount } = useAuth();
+  const { refreshControl } = usePullToRefresh();
 
   const [twoFAEnabled, setTwoFAEnabled] = useState(currentUser?.twoFAEnabled || false);
   const [phone, setPhone] = useState(currentUser?.phone || '');
@@ -109,7 +111,7 @@ export default function SecurityScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>

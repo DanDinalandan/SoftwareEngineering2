@@ -4,6 +4,7 @@ import {
   StyleSheet, SafeAreaView, Alert, Image,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 import { BottomNav } from '../components';
 import { colors, spacing, radius } from '../theme';
 
@@ -44,6 +45,7 @@ function getRiskLabel(risk) {
 export default function ProfileScreen({ navigation }) {
   const { currentUser, logout, getUnreadCount } = useAuth();
   const unreadCount = getUnreadCount();
+  const { refreshControl } = usePullToRefresh();
 
   if (!currentUser) return null;
 
@@ -99,7 +101,7 @@ export default function ProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={refreshControl}>
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
