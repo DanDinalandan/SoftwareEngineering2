@@ -151,7 +151,9 @@ export default function CalendarScreen({ navigation }) {
                   ]}>
                     {cell.day}
                   </Text>
-                  {isVapeFree && <View style={styles.vapeFreeDot} />}
+                  {isVapeFree && <View style={[styles.statusDot, styles.statusDotLeft, { backgroundColor: colors.success }]} />}
+                  {isVaped && <View style={[styles.statusDot, styles.statusDotLeft, { backgroundColor: colors.danger }]} />}
+                  {isToday && <View style={[styles.statusDot, styles.statusDotRight, { backgroundColor: colors.lavender }]} />}
                 </TouchableOpacity>
               );
             })}
@@ -179,7 +181,7 @@ export default function CalendarScreen({ navigation }) {
                   </View>
                   <View style={styles.logActions}>
                     <TouchableOpacity onPress={() => setConfirmDelete(selectedLog.id)} style={styles.actionBtn}>
-                      <Text style={styles.deleteIcon}>🗑</Text>
+                      <Text style={styles.deleteIcon}>Delete</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -209,7 +211,7 @@ export default function CalendarScreen({ navigation }) {
             <Text style={styles.modalTitle}>Are you sure you{'\n'}want to delete?</Text>
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.modalBtnNo} onPress={() => setConfirmDelete(null)}>
-                <Text style={styles.modalBtnText}>No</Text>
+                <Text style={styles.modalBtnNoText}>No</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalBtnYes}
@@ -271,12 +273,14 @@ const styles = StyleSheet.create({
   cellToday: { backgroundColor: colors.lavender },
   cellSelected: { borderWidth: 2, borderColor: colors.lavender },
   cellVapeFree: { backgroundColor: 'rgba(126,200,160,0.2)' },
-  cellVaped: { backgroundColor: 'rgba(224,112,112,0.15)' },
+  cellVaped: { backgroundColor: 'rgba(224,112,112,0.18)' },
   cellText: { fontSize: 13, color: colors.text, fontWeight: '500' },
   cellTextInactive: { color: colors.textMuted },
   cellTextHighlight: { color: colors.porcelain, fontWeight: '800' },
   cellTextVapeFree: { fontWeight: '700' },
-  vapeFreeDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.success, position: 'absolute', bottom: 3 },
+  statusDot: { width: 5, height: 5, borderRadius: 3, position: 'absolute', bottom: 3 },
+  statusDotLeft: { left: '38%' },
+  statusDotRight: { right: '38%' },
   legend: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
@@ -287,9 +291,9 @@ const styles = StyleSheet.create({
   logTime: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
   logActions: { flexDirection: 'row', gap: 10 },
   actionBtn: { padding: 4 },
-  deleteIcon: { fontSize: 18 },
+  deleteIcon: { fontSize: 12, color: colors.danger, fontWeight: '800' },
   logDetails: { gap: 4 },
-  logDetailItem: { fontSize: 13, color: colors.bone },
+  logDetailItem: { fontSize: 13, color: colors.text },
   noLog: { fontSize: 13, color: colors.textMuted, fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(10,5,25,0.8)', alignItems: 'center', justifyContent: 'center' },
   modal: { backgroundColor: colors.cardSolid, borderWidth: 1, borderColor: colors.border, borderRadius: radius.xl, padding: 28, width: '80%', alignItems: 'center', gap: 20 },
@@ -297,5 +301,6 @@ const styles = StyleSheet.create({
   modalBtns: { flexDirection: 'row', gap: 12, width: '100%' },
   modalBtnNo: { flex: 1, paddingVertical: 12, backgroundColor: colors.cardSolid, borderRadius: radius.md, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modalBtnYes: { flex: 1, paddingVertical: 12, backgroundColor: colors.frenchBlue, borderRadius: radius.md, alignItems: 'center' },
+  modalBtnNoText: { color: colors.text, fontWeight: '700', fontSize: 14 },
   modalBtnText: { color: colors.porcelain, fontWeight: '700', fontSize: 14 },
 });

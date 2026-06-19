@@ -27,7 +27,6 @@ export default function PeerMessagingScreen({ navigation }) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.emptyWrap}>
-          <Text style={{ fontSize: 40, marginBottom: 12 }}>💬</Text>
           <Text style={styles.emptyTitle}>No connection yet</Text>
           <Text style={styles.emptyText}>Connect with a Vape User first to start messaging.</Text>
         </View>
@@ -57,7 +56,7 @@ export default function PeerMessagingScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         >
           {messages.length === 0 ? (
-            <Text style={styles.noMessages}>No messages yet. Say hello! 👋</Text>
+            <Text style={styles.noMessages}>No messages yet. Say hello.</Text>
           ) : messages.map((msg) => {
             const isMe = msg.fromUsername === currentUser.username;
             return (
@@ -81,7 +80,7 @@ export default function PeerMessagingScreen({ navigation }) {
             onSubmitEditing={handleSend}
           />
           <TouchableOpacity style={styles.sendBtn} onPress={handleSend} disabled={!text.trim()}>
-            <Text style={styles.sendIcon}>➤</Text>
+            <Text style={styles.sendIcon}>Send</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -108,8 +107,8 @@ const styles = StyleSheet.create({
   bubbleTimeMe: { color: 'rgba(255,255,246,0.6)', textAlign: 'right' },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: spacing.lg, paddingVertical: 10, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: 'rgba(20,10,45,0.8)' },
   input: { flex: 1, backgroundColor: colors.input, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: colors.text, fontSize: 14, borderWidth: 1, borderColor: colors.border, maxHeight: 100 },
-  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center' },
-  sendIcon: { color: colors.porcelain, fontSize: 16 },
+  sendBtn: { width: 58, height: 42, borderRadius: 21, backgroundColor: colors.frenchBlue, alignItems: 'center', justifyContent: 'center' },
+  sendIcon: { color: colors.porcelain, fontSize: 12, fontWeight: '800' },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.text, marginBottom: 8 },
   emptyText: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 21 },

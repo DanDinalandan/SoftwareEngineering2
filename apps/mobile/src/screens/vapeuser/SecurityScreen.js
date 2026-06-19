@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, radius } from '../../theme';
 
 export default function SecurityScreen({ navigation }) {
-  const { currentUser, update2FA, resetProgress, deleteAccount } = useAuth();
+  const { currentUser, updatePhone, update2FA, verify2FA, resetProgress, deleteAccount } = useAuth();
 
   const [twoFAEnabled, setTwoFAEnabled] = useState(currentUser?.twoFAEnabled || false);
   const [phone, setPhone] = useState(currentUser?.phone || '');
@@ -22,36 +22,34 @@ export default function SecurityScreen({ navigation }) {
   const [codeError, setCodeError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Simulated 6-digit OTP
-  const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
-
-  const handleToggle2FA = (val) => {
+  const handleToggle2FA = async (val) => {
     if (!currentUser?.phone && !phone) {
       setPhoneError('Add a phone number first to enable 2FA.');
       return;
     }
     if (val) {
-      // Simulate sending OTP
-      const code = generateCode();
-      setSentCode(code);
+      const result = await update2FA(true, phone);
+      if (!result?.success) {
+        setPhoneError(result?.error || 'Could not send OTP.');
+        return;
+      }
+      setSentCode(result.devOtp || '');
       setEnteredCode('');
       setCodeError('');
       setShow2FAModal(true);
-      // In production: call SMS API here
-      console.log(`[DEV] OTP code: ${code}`); // show in console for testing
     } else {
       setTwoFAEnabled(false);
       update2FA && update2FA(false);
     }
   };
 
-  const handleVerifyCode = () => {
-    if (enteredCode !== sentCode) {
-      setCodeError('Incorrect code. Please try again.');
+  const handleVerifyCode = async () => {
+    const result = await verify2FA(enteredCode);
+    if (!result?.success) {
+      setCodeError(result?.error || 'Incorrect code. Please try again.');
       return;
     }
     setTwoFAEnabled(true);
-    update2FA && update2FA(true);
     setShow2FAModal(false);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2500);
@@ -66,7 +64,7 @@ export default function SecurityScreen({ navigation }) {
     setPhone(cleaned);
     setPhoneError('');
     setEditingPhone(false);
-    update2FA && update2FA(twoFAEnabled, cleaned);
+    updatePhone && updatePhone(cleaned);
   };
 
   const handleResetProgress = () => {
@@ -169,7 +167,7 @@ export default function SecurityScreen({ navigation }) {
         <View style={styles.sectionCard}>
           <View style={styles.twoFARow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.sectionTitle}>🔐 Two-Factor Authentication</Text>
+              <Text style={styles.sectionTitle}>Two-Factor Authentication</Text>
               <Text style={styles.sectionDesc}>
                 Every login will require a 6-digit code sent to your phone.
               </Text>
@@ -183,12 +181,12 @@ export default function SecurityScreen({ navigation }) {
           </View>
           {twoFAEnabled && (
             <View style={styles.enabledBadge}>
-              <Text style={styles.enabledText}>✓ 2FA is active on your account</Text>
+              <Text style={styles.enabledText}>2FA is active on your account</Text>
             </View>
           )}
           {!phone && (
             <Text style={styles.warningText}>
-              ⚠️ Add a phone number above to enable 2FA.
+              Add a phone number above to enable 2FA.
             </Text>
           )}
         </View>
@@ -231,7 +229,7 @@ export default function SecurityScreen({ navigation }) {
             {/* DEV HINT — remove in production */}
             <View style={styles.devHint}>
               <Text style={styles.devHintText}>
-                Dev mode — check your console for the OTP code
+                Demo OTP: {sentCode || 'sent by SMS'}
               </Text>
             </View>
             <TextInput
@@ -258,9 +256,7 @@ export default function SecurityScreen({ navigation }) {
             <TouchableOpacity
               style={{ marginTop: 14, alignItems: 'center' }}
               onPress={() => {
-                const code = generateCode();
-                setSentCode(code);
-                console.log(`[DEV] New OTP: ${code}`);
+                handleToggle2FA(true);
               }}
             >
               <Text style={styles.resendText}>Resend code</Text>
@@ -273,7 +269,6 @@ export default function SecurityScreen({ navigation }) {
       <Modal transparent visible={showSuccess} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modal, { alignItems: 'center' }]}>
-            <Text style={{ fontSize: 40, marginBottom: 10 }}>🎉</Text>
             <Text style={styles.modalTitle}>Number Enabled!</Text>
             <Text style={styles.modalDesc}>Your account is now more secure.</Text>
           </View>
@@ -309,7 +304,7 @@ const styles = StyleSheet.create({
   },
   phoneBtns: { flexDirection: 'row', gap: 10 },
   cancelBtn: { flex: 1, paddingVertical: 11, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
-  cancelBtnText: { color: colors.textMuted, fontWeight: '600' },
+  cancelBtnText: { color: colors.text, fontWeight: '700' },
   saveBtn: { flex: 1, paddingVertical: 11, borderRadius: radius.md, backgroundColor: colors.frenchBlue, alignItems: 'center' },
   saveBtnText: { color: colors.porcelain, fontWeight: '700' },
   twoFARow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
@@ -354,7 +349,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(240,192,112,0.15)', borderRadius: radius.sm,
     borderWidth: 1, borderColor: colors.warning + '40', padding: 8, marginBottom: 12,
   },
-  devHintText: { fontSize: 11, color: colors.warning, textAlign: 'center' },
+  devHintText: { fontSize: 13, color: colors.text, textAlign: 'center', fontWeight: '800' },
   otpInput: {
     backgroundColor: colors.input, borderRadius: radius.md, borderWidth: 1,
     borderColor: colors.lavender, paddingHorizontal: 16, paddingVertical: 14,

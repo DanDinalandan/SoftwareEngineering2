@@ -272,12 +272,7 @@ const styles = StyleSheet.create({
   recCard: { flexDirection: 'row', gap: 10, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 14, marginBottom: 8, alignItems: 'flex-start' },
   recIcon: { fontSize: 20 },
   recText: { flex: 1, fontSize: 13, color: colors.bone, lineHeight: 19 },
-  notReadyCard: { backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 8 },
-  notReadyText: { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
-  summaryCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.lavender + '50', padding: 14, marginBottom: 8 },
-  summaryTitle: { fontSize: 14, fontWeight: '800', color: colors.text, marginBottom: 5 },
-  summaryText: { fontSize: 13, color: colors.bone, lineHeight: 19 },
   noteCard: { backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: colors.lavender },
   noteDate: { fontSize: 10, color: colors.textMuted, marginBottom: 4 },
-  noteText: { fontSize: 13, color: colors.bone, fontStyle: 'italic', lineHeight: 19 },
+  noteText: { fontSize: 13, color: colors.text, fontStyle: 'italic', lineHeight: 19 },
 });

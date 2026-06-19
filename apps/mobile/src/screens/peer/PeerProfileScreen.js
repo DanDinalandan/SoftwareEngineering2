@@ -24,7 +24,10 @@ export default function PeerProfileScreen({ navigation }) {
   const handleSearch = async () => {
     if (!searchUsername.trim()) return;
     const result = await sendConnectionRequest(searchUsername.trim());
-    setSearchResult(result);
+    setSearchResult({
+      success: !!result?.success,
+      error: result?.error || 'Unable to send request. Check the username and try again.',
+    });
   };
 
   const handleDisconnect = () => {
@@ -87,7 +90,7 @@ export default function PeerProfileScreen({ navigation }) {
               </View>
               {searchResult && (
                 <Text style={[styles.searchFeedback, { color: searchResult.success ? colors.success : colors.danger }]}>
-                  {searchResult.success ? '✓ Request sent!' : `✕ ${searchResult.error}`}
+                  {searchResult.success ? 'Request sent.' : searchResult.error}
                 </Text>
               )}
             </>
