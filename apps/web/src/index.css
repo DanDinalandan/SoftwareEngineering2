@@ -1603,3 +1603,105 @@ aside {
 .inbox-item-unread:hover { background: rgba(132,144,244,0.05); }
 .inbox-sender-unread  { font-weight: 800; color: var(--text-dark); }
 .inbox-subject-unread { font-weight: 800; color: var(--text-dark); }
+
+/* --- New Detailed Session Styles (Dashboard & History) --- */
+.session-details-list {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.session-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.session-detail-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.session-detail-time {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.session-detail-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.hist-session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.hist-session-card {
+  background: var(--bg-tag);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.hist-session-time {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+}
+
+.hist-session-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* --- Vaping Patterns Card (Statistics) --- */
+.patterns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pattern-stat-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.pattern-icon {
+  font-size: 20px;
+  background: var(--surface-1);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.pattern-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.pattern-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark);
+}

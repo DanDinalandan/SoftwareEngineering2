@@ -79,7 +79,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
   }, [navigation, currentUser?.id]);
 
   const startAccept = (notif) => {
-    setPendingAccept({ requestId: notif.requestId, fromDisplayName: notif.fromDisplayName || notif.fromUsername });
+    setPendingAccept({ requestId: notif.requestId, fromDisplayName: notif.fromDisplayName || 'this user' });
     setSelectedRelationship(null);
     setShowConfirmShare(false);
   };
