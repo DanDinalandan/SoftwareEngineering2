@@ -483,7 +483,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       currentUser, notifTick, moodDraft, notifications,
       register, login, forgotPassword, setRole, saveDetails,
-      refreshUser, fetchNotifications,
+      refreshUser, fetchNotifications, fetchRewards, fetchConnectedVapeUser,
       logMoodEntry, deleteLogEntry,
       sendConnectionRequest, respondToRequest, respondToProviderRequest, disconnect,
       sendMessage, getMessages,

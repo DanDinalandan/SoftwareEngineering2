@@ -11,4 +11,7 @@ COPY apps/mobile/assets ./assets
 
 EXPOSE 8081 19000 19001 19002
 
+ENV EXPO_NO_TELEMETRY=0
+ENV EXPO_OFFLINE=0
+
 CMD ["npx", "expo", "start", "--lan", "--clear"]

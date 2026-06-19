@@ -37,6 +37,7 @@ services:
     environment:
       EXPO_PUBLIC_API_BASE_URL: ${EXPO_PUBLIC_API_BASE_URL:-http://host.docker.internal:3000}
       EXPO_NO_TELEMETRY: "1"
+      EXPO_OFFLINE: "0"
       REACT_NATIVE_PACKAGER_HOSTNAME: ${LAN_IP:-}
     ports:
       - "8081:8081"

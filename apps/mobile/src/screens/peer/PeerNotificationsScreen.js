@@ -7,11 +7,23 @@ import PeerBottomNav from './PeerBottomNav';
 const typeIcon = { high_risk: require('../../../assets/icons/warning.png'), vaped: require('../../../assets/icons/broken-heart.png'), connection_request: require('../../../assets/icons/alerts.png'), connection_accepted: require('../../../assets/icons/accepted.png'), connection_removed: require('../../../assets/icons/rejected.png') };
 
 export default function PeerNotificationsScreen({ navigation }) {
-  const { getNotifications, markAllRead, getUnreadCount, respondToRequest } = useAuth();
+  const { getNotifications, fetchNotifications, markAllRead, getUnreadCount, respondToRequest } = useAuth();
   const notifications = getNotifications();
   const unread = getUnreadCount();
 
-  useEffect(() => { markAllRead(); }, []);
+  useEffect(() => {
+    let mounted = true;
+    const loadNotifications = async () => {
+      await fetchNotifications?.();
+      if (mounted) await markAllRead();
+    };
+    loadNotifications();
+    const unsubscribe = navigation.addListener('focus', loadNotifications);
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -23,13 +35,13 @@ export default function PeerNotificationsScreen({ navigation }) {
 
         {notifications.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Image source={typeIcon[n.type] || require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
+            <Image source={require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
             <Text style={styles.emptyTitle}>No notifications yet</Text>
             <Text style={styles.emptyText}>You'll be notified when your connected user logs an entry.</Text>
           </View>
         ) : notifications.map((n) => (
           <View key={n.id} style={[styles.notifCard, !n.read && styles.notifUnread]}>
-            <Image source={require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
+            <Image source={typeIcon[n.type] || require('../../../assets/icons/alerts.png')} style={styles.notifIcon} />
             <View style={{ flex: 1 }}>
               <Text style={styles.notifMsg}>{n.message}</Text>
               <Text style={styles.notifTime}>{n.timestamp}</Text>

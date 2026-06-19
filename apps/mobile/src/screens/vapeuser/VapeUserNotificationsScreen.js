@@ -24,7 +24,7 @@ const typeIcon = {
 };
 
 export default function VapeUserNotificationsScreen({ navigation }) {
-  const { getNotifications, markAllRead, getUnreadCount, respondToRequest, respondToProviderRequest } = useAuth();
+  const { currentUser, getNotifications, fetchNotifications, markAllRead, getUnreadCount, respondToRequest, respondToProviderRequest } = useAuth();
   const notifications = getNotifications();
   const unread = getUnreadCount();
 
@@ -36,8 +36,44 @@ export default function VapeUserNotificationsScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [respondedNotificationId, setRespondedNotificationId] = useState(null);
+  // Tracks whether the initial/focus fetch is still in flight, separate from
+  // the per-action `loading` above, so we can tell "still loading" apart
+  // from "genuinely no notifications" in the render below.
+  const [screenLoading, setScreenLoading] = useState(true);
 
-  useEffect(() => { markAllRead(); }, []);
+  useEffect(() => {
+    let mounted = true;
+
+    const loadNotifications = async () => {
+      // Guard: if currentUser hasn't hydrated yet (e.g. app opened cold
+      // from a tapped push notification, or session restore is still in
+      // flight), fetchNotifications() would silently no-op. Bail out here
+      // instead of flipping screenLoading to false on an empty result —
+      // the AuthContext-level effect (keyed on currentUser?.id) and the
+      // 5s poll will pick it up once the user is ready, and this listener
+      // will also re-run since currentUser?.id is in the deps below.
+      if (!currentUser?.id) return;
+      setScreenLoading(true);
+      await fetchNotifications?.();
+      if (mounted) setScreenLoading(false);
+    };
+
+    loadNotifications();
+    const unsubscribeFocus = navigation.addListener('focus', loadNotifications);
+    // Mark notifications read on the way OUT, not the way in — marking
+    // them read immediately on focus risked the backend excluding them
+    // from the very next fetch (poll tick or re-focus) before the user
+    // ever actually saw them.
+    const unsubscribeBlur = navigation.addListener('blur', () => {
+      markAllRead?.();
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation, currentUser?.id]);
 
   const startAccept = (notif) => {
     setPendingAccept({ requestId: notif.requestId, fromDisplayName: notif.fromDisplayName || notif.fromUsername });
@@ -114,7 +150,11 @@ export default function VapeUserNotificationsScreen({ navigation }) {
           )}
         </View>
 
-        {notifications.length === 0 ? (
+        {screenLoading && notifications.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>Loading notifications…</Text>
+          </View>
+        ) : notifications.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No notifications yet</Text>
             <Text style={styles.emptyText}>
