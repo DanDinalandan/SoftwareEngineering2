@@ -8,6 +8,30 @@ export default function LoginPage({ onLogin, onGoToSignup }) {
   const [error, setError]       = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  // Forgot Password
+  const [showForgotModal, setShowForgotModal] = useState(false)
+  const [forgotEmail, setForgotEmail] = useState('')
+  const [forgotStatus, setForgotStatus] = useState({ loading: false, error: '', success: false })
+
+  const handleForgotPassword = (e) => {
+    e.preventDefault()
+    if (!forgotEmail.trim()) {
+      setForgotStatus({ loading: false, error: 'Please enter your email address.', success: false })
+      return
+    }
+    
+    setForgotStatus({ loading: true, error: '', success: false })
+    
+    setTimeout(() => {
+      setForgotStatus({ loading: false, error: '', success: true })
+      setTimeout(() => {
+        setShowForgotModal(false)
+        setForgotEmail('')
+        setForgotStatus({ loading: false, error: '', success: false })
+      }, 3000)
+    }, 1500)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -69,6 +93,18 @@ export default function LoginPage({ onLogin, onGoToSignup }) {
             />
           </div>
 
+          <div style={{ textAlign: 'right', marginTop: '-8px', marginBottom: '16px' }}>
+            <span 
+              onClick={() => {
+                setShowForgotModal(true)
+                setForgotEmail(email)
+              }} 
+              style={{ color: 'var(--bg-highlight)', fontSize: '12px', cursor: 'pointer', fontWeight: 600 }}
+            >
+              Forgot password?
+            </span>
+          </div>
+
           <button
             type="submit"
             className="btn-save"
@@ -87,6 +123,60 @@ export default function LoginPage({ onLogin, onGoToSignup }) {
         </div>
 
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: 400, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <h2 style={{ margin: 0, fontSize: 18, color: 'var(--text-dark)' }}>Reset Password</h2>
+            
+            {forgotStatus.success ? (
+              <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
+                <div style={{ color: 'var(--green)', fontSize: 14, fontWeight: 600 }}>Reset link sent!</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 8 }}>Check your inbox for further instructions.</div>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Enter your provider email address and we will send you a link to reset your password.</div>
+                
+                <input
+                  type="email"
+                  className="field-input"
+                  style={{ margin: 0, width: '100%' }}
+                  placeholder="nurse@email.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  disabled={forgotStatus.loading}
+                />
+                
+                {forgotStatus.error && <div style={{ color: 'var(--red)', fontSize: 12 }}>{forgotStatus.error}</div>}
+                
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                  <button 
+                    className="btn-view" 
+                    onClick={() => {
+                      setShowForgotModal(false)
+                      setForgotStatus({ loading: false, error: '', success: false })
+                    }} 
+                    disabled={forgotStatus.loading}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="btn-save" 
+                    onClick={handleForgotPassword} 
+                    disabled={!forgotEmail.trim() || forgotStatus.loading}
+                  >
+                    {forgotStatus.loading ? 'Sending...' : 'Send Link'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

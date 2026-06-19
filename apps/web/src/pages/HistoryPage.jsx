@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
-import { moodLogOptions, triggerTagList, cravingThresholds } from '../data/displayOptions.js'
+import { moodLogOptions, triggerTagList, cravingThresholds, TIME_SLOTS, DURATIONS, VAPE_DEVICES } from '../data/displayOptions.js'
 
 // ── Helpers ───────────────────────────────────────────────────
 function getMoodEmoji(moodLabel) {
@@ -74,14 +74,38 @@ function ExpandedRow({ entry }) {
       {/* Vaping status */}
       <div className="hist-expanded-section">
         <div className="section-label hist-section-label">Vaping Status</div>
-        <div className="hist-vape-row">
-          <span className={`hist-vape-chip ${entry.vapedToday === 'No' ? 'hist-vape-clean' : 'hist-vape-dim'}`}>
-            ✓ No vaping
-          </span>
-          <span className={`hist-vape-chip ${entry.vapedToday === 'Yes' ? 'hist-vape-relapse' : 'hist-vape-dim'}`}>
-            ✗ Vaped today
-          </span>
-        </div>
+        
+        {entry.vapedToday === 'No' ? (
+          <div className="hist-vape-row">
+            <span className="hist-vape-chip hist-vape-clean">✓ No vaping reported</span>
+          </div>
+        ) : (
+          <div>
+            <div className="hist-vape-row" style={{ marginBottom: 12 }}>
+              <span className="hist-vape-chip hist-vape-relapse">✗ Vaped today</span>
+            </div>
+            
+            {entry.vapedSessions?.length > 0 ? (
+              <div className="hist-session-grid">
+                {entry.vapedSessions.map((session, idx) => {
+                  const timeLabel = TIME_SLOTS.find(t => t.id === session.timeSlotId)?.label || session.timeSlot || 'Unknown time'
+                  const durLabel  = DURATIONS.find(d => d.id === session.durationId)?.label || session.duration || 'Unknown duration'
+                  const devLabel  = VAPE_DEVICES.find(v => v.id === session.deviceId)?.label || session.device || 'Other device'
+
+                  return (
+                    <div key={idx} className="hist-session-card">
+                      <div className="hist-session-time">{timeLabel}</div>
+                      <div className="hist-session-meta">{durLabel}</div>
+                      <div className="hist-session-meta">{devLabel}</div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="hist-note-text" style={{ opacity: 0.6 }}>No detailed session data recorded for this day.</div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Notes */}

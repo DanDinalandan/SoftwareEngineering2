@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
-import { moodLogOptions, triggerTagList, cravingThresholds } from '../data/displayOptions.js'
+import { moodLogOptions, triggerTagList, cravingThresholds, TIME_SLOTS, DURATIONS, VAPE_DEVICES } from '../data/displayOptions.js'
 
 // ── Patient summary card ────────────────
 function PatientSummaryCard({ patient, onSelectPatient, allPatients }) {
@@ -146,16 +146,47 @@ function MoodLogCard({ todaysLog, onOpenHistory }) {
 
           {/* ── Did patient vape today? ── */}
           <div className="survey-container">
-            <div className="section-label">Did patient vape today?</div>
+            <div className="section-label">Vaping Activity</div>
             <div className="survey-actions">
               <div className={`survey-btn ${todaysLog.vapedToday === 'No' ? 'active' : ''}`} style={{ cursor: 'default', textAlign: 'center', opacity: todaysLog.vapedToday === 'No' ? 1 : 0.3 }}>
-                No
+                ✓ No vaping today
               </div>
-              <div className={`survey-btn ${todaysLog.vapedToday === 'Yes' ? 'active' : ''}`} style={{ cursor: 'default', textAlign: 'center', background: todaysLog.vapedToday === 'Yes' ? 'var(--red)' : '', borderColor: todaysLog.vapedToday === 'Yes' ? 'var(--red)' : '', opacity: todaysLog.vapedToday === 'Yes' ? 1 : 0.3 }}>
-                Yes
+              <div className={`survey-btn ${todaysLog.vapedToday === 'Yes' ? 'active' : ''}`} style={{ cursor: 'default', textAlign: 'center', background: todaysLog.vapedToday === 'Yes' ? 'rgba(246,95,95,0.1)' : '', borderColor: todaysLog.vapedToday === 'Yes' ? 'var(--red)' : '', color: todaysLog.vapedToday === 'Yes' ? 'var(--red)' : '', opacity: todaysLog.vapedToday === 'Yes' ? 1 : 0.3 }}>
+                ✗ Vaped today
               </div>
             </div>
+
+            {/* Render Detailed Sessions if they vaped */}
+            {todaysLog.vapedToday === 'Yes' && todaysLog.vapedSessions?.length > 0 && (
+              <div className="session-details-list">
+                <div className="section-label" style={{ marginTop: 16, marginBottom: 8, fontSize: 11 }}>Logged Sessions ({todaysLog.vapedSessions.length})</div>
+                {todaysLog.vapedSessions.map((session, idx) => {
+                  const timeLabel = TIME_SLOTS.find(t => t.id === session.timeSlotId)?.label || session.timeSlot || 'Unknown time'
+                  const durLabel  = DURATIONS.find(d => d.id === session.durationId)?.label || session.duration || 'Unknown duration'
+                  const devLabel  = VAPE_DEVICES.find(v => v.id === session.deviceId)?.label || session.device || 'Other device'
+
+                  return (
+                    <div key={idx} className="session-detail-row">
+                      <div className="session-detail-time">{timeLabel}</div>
+                      <div className="session-detail-meta">
+                        {durLabel} • {devLabel}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
+
+          {/* ── Patient Note ── */}
+          {todaysLog.notes && (
+            <div className="survey-container" style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 16, marginTop: 16 }}>
+              <div className="section-label">Patient Note</div>
+              <p style={{ fontSize: 13, color: 'var(--text-dark)', fontStyle: 'italic', background: 'var(--surface-2)', padding: '12px 16px', borderRadius: 8, margin: 0 }}>
+                "{todaysLog.notes}"
+              </p>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -283,8 +314,20 @@ export default function DashboardPage({ activePatientId, allPatients, onSelectPa
 
   useEffect(() => {
     setIsLoading(true)
-    api.getPatientDashboard(activePatientId)
-      .then((data) => setDashboardData(data))
+    Promise.all([
+      api.getPatientDashboard(activePatientId),
+      api.getPatientLogHistory(activePatientId)
+    ])
+      .then(([dashData, logs]) => {
+        const todayStr = new Date().toISOString().slice(0, 10)
+        const fullTodayLog = logs.find(l => l.date === todayStr)
+
+        if (dashData.todaysLog && fullTodayLog) {
+          dashData.todaysLog.vapedSessions = fullTodayLog.vapedSessions || []
+          dashData.todaysLog.notes = fullTodayLog.notes || ''
+        }
+        setDashboardData(dashData)
+      })
       .catch((err) => console.error("Error fetching dashboard:", err))
       .finally(() => setIsLoading(false))
   }, [activePatientId])

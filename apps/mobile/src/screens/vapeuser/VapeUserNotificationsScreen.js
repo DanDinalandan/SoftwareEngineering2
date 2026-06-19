@@ -76,7 +76,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
   }, [navigation, currentUser?.id]);
 
   const startAccept = (notif) => {
-    setPendingAccept({ requestId: notif.requestId, fromDisplayName: notif.fromDisplayName || notif.fromUsername });
+    setPendingAccept({ requestId: notif.requestId, fromDisplayName: notif.fromDisplayName || 'this user' });
     setSelectedRelationship(null);
     setShowConfirmShare(false);
   };
@@ -165,7 +165,7 @@ export default function VapeUserNotificationsScreen({ navigation }) {
           <>
             {notifications.map((n) => {
               // Hide notification if it was just responded to
-              if (respondedNotificationId === n.requestId || respondedNotificationId === n.providerRequestId) return null;
+              if (respondedNotificationId && (respondedNotificationId === n.requestId || respondedNotificationId === n.providerRequestId)) return null;
               return (
                 <View
                   key={n.id}

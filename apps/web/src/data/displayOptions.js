@@ -35,3 +35,27 @@ export const prefToggles = [
   // { label: 'New patient enrollment', sub: 'When a patient is assigned to you', defaultOn: true },
 ];
 
+export const TIME_SLOTS = [
+  { id: 'early_morning', label: 'Early Morning', sub: '12am – 6am', hour: 3 },
+  { id: 'morning', label: 'Morning', sub: '6am – 10am', hour: 8 },
+  { id: 'midday', label: 'Midday', sub: '10am – 1pm', hour: 11 },
+  { id: 'afternoon', label: 'Afternoon', sub: '1pm – 5pm', hour: 14 },
+  { id: 'evening', label: 'Evening', sub: '5pm – 9pm', hour: 18 },
+  { id: 'night', label: 'Night', sub: '9pm – 12am', hour: 22 },
+];
+
+export const DURATIONS = [
+  { id: 'under_5', label: 'under 5 min', minutes: 4 },
+  { id: 'under_15', label: '5–15 min', minutes: 10 },
+  { id: 'under_30', label: '15–30 min', minutes: 22 },
+  { id: 'under_60', label: '30–60 min', minutes: 45 },
+  { id: 'over_60', label: 'over an hour', minutes: 90 },
+];
+
+export const VAPE_DEVICES = [
+  { id: 'pod', label: 'Pod System' },
+  { id: 'disposable', label: 'Disposable' },
+  { id: 'mod', label: 'Box Mod' },
+  { id: 'pen', label: 'Vape Pen' },
+  { id: 'other', label: 'Other' },
+];

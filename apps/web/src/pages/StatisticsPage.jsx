@@ -1,5 +1,38 @@
 import { useState, useEffect } from 'react'
 import { api } from '../services/api.js'
+import { TIME_SLOTS, DURATIONS, VAPE_DEVICES } from '../data/displayOptions.js'
+
+function calculateVapingPatterns(logs) {
+  const relapseLogs = logs.filter(l => l.vapedToday === 'Yes' && l.vapedSessions?.length > 0);
+  if (relapseLogs.length === 0) return null;
+
+  const timeSlots = {};
+  const devices = {};
+  let totalDurationMins = 0;
+  let totalSessions = 0;
+
+  relapseLogs.forEach(log => {
+    log.vapedSessions.forEach(session => {
+      if (session.timeSlotId) timeSlots[session.timeSlotId] = (timeSlots[session.timeSlotId] || 0) + 1;
+      if (session.deviceId) devices[session.deviceId] = (devices[session.deviceId] || 0) + 1;
+      
+      const durObj = DURATIONS.find(d => d.id === session.durationId);
+      if (durObj) totalDurationMins += durObj.minutes;
+      
+      totalSessions++;
+    });
+  });
+
+  const topTimeId = Object.keys(timeSlots).sort((a, b) => timeSlots[b] - timeSlots[a])[0];
+  const topDevId  = Object.keys(devices).sort((a, b) => devices[b] - devices[a])[0];
+
+  return {
+    topTimeSlot: TIME_SLOTS.find(t => t.id === topTimeId)?.label || 'Unknown',
+    topDevice: VAPE_DEVICES.find(v => v.id === topDevId)?.label || 'Unknown',
+    avgDuration: totalSessions > 0 ? `${Math.round(totalDurationMins / totalSessions)} min` : 'Unknown',
+    avgSessionsPerRelapseDay: (totalSessions / relapseLogs.length).toFixed(1)
+  };
+}
 
 function InsightsSeparator({ label }) {
   return (
@@ -164,6 +197,34 @@ function MilestoneJourney({ milestones }) {
   )
 }
 
+function VapingPatternsCard({ patterns }) {
+  if (!patterns) return null; // Failsafe until backend is connected
+
+  const stats = [
+    { label: 'Highest Risk Time', value: patterns.topTimeSlot || 'N/A', icon: '⏱️' },
+    { label: 'Primary Device', value: patterns.topDevice || 'N/A', icon: '🔋' },
+    { label: 'Avg. Session Length', value: patterns.avgDuration || 'N/A', icon: '⏳' },
+    { label: 'Avg. Sessions/Day', value: patterns.avgSessionsPerRelapseDay || '0', icon: '📊' }
+  ];
+
+  return (
+    <div className="card">
+      <div className="section-label" style={{ marginBottom: 16 }}>Vaping Patterns & Habits</div>
+      <div className="patterns-grid">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="pattern-stat-box">
+            <div className="pattern-icon">{stat.icon}</div>
+            <div>
+              <div className="pattern-label">{stat.label}</div>
+              <div className="pattern-value">{stat.value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Patient identity banner (mirrors HistoryPage) ─────────────
 function PatientBanner({ patient }) {
   if (!patient) return null
@@ -195,8 +256,14 @@ export default function StatisticsPage({ activePatientId }) {
 
   useEffect(() => {
     setIsLoading(true)
-    api.getPatientProfile(activePatientId)
-      .then((data) => setStatData(data))
+    Promise.all([
+      api.getPatientProfile(activePatientId),
+      api.getPatientLogHistory(activePatientId)
+    ])
+      .then(([profileData, logs]) => {
+        profileData.insights.vapingPatterns = calculateVapingPatterns(logs)
+        setStatData(profileData)
+      })
       .catch((err) => console.error("Error fetching statistics:", err))
       .finally(() => setIsLoading(false))
   }, [activePatientId])
@@ -244,6 +311,10 @@ export default function StatisticsPage({ activePatientId }) {
           bestMoodDay={insights.bestMoodDay}
           worstCravingDay={insights.worstCravingDay}
         />
+      </div>
+
+      <div style={{ marginBottom: 24 }}>
+        <VapingPatternsCard patterns={insights.vapingPatterns} />
       </div>
 
       <MilestoneJourney milestones={insights.milestones} />
